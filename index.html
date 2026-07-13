@@ -34,7 +34,7 @@
             --warning: #ff9500;
             --danger: #ff3b30;
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --sidebar-width: 420px;
+            --sidebar-width: 680px;
             
             /* Theme overrides */
             --header-bg: rgba(11, 12, 22, 0.6);
@@ -1418,6 +1418,9 @@
         }
 
         .floating-filter-panel .filter-inputs, .floating-topo-panel .filter-inputs, .floating-param-panel .filter-inputs {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
             gap: 1rem;
         }
 
