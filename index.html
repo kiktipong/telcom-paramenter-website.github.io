@@ -1578,6 +1578,65 @@
                 height: 70px;
             }
         }
+
+        /* Custom HTML Tooltip for Chart.js */
+        #chartjs-tooltip {
+            opacity: 0;
+            position: absolute;
+            background: rgba(20, 20, 35, 0.9);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 8px 12px;
+            pointer-events: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 10000;
+        }
+        
+        :root.light-mode #chartjs-tooltip {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 113, 227, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 113, 227, 0.1);
+        }
+
+        #chartjs-tooltip table {
+            margin: 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #chartjs-tooltip th {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: left;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        #chartjs-tooltip td {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            padding: 4px 0;
+            vertical-align: middle;
+            color: var(--text-color);
+        }
+        
+        :root.light-mode #chartjs-tooltip td {
+            color: #1d1d1f;
+        }
+
+        #chartjs-tooltip .tooltip-color-box {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -3564,17 +3623,22 @@
                             values[t] = val;
                             
                             const absVal = Math.abs(val);
-                            const arrowSpan = val > 0 
-                                ? `<span style="color: var(--success); font-weight: bold; margin-right: 3px;">▲</span>` 
-                                : (val < 0 ? `<span style="color: var(--danger); font-weight: bold; margin-right: 3px;">▼</span>` : '');
+                            let cellStyle = "";
+                            let displayHTML = "";
                             
-                            let cellClass = "";
-                            let warningText = "";
                             if (absVal >= threshold) {
-                                cellClass = 'style="color: #ff3b30; font-weight: 600; background: rgba(255, 59, 48, 0.05);"';
-                                warningText = ' ⚠️';
+                                const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
+                                const colorVar = val > 0 ? 'var(--success)' : 'var(--danger)';
+                                const bgVar = val > 0 ? 'rgba(52, 199, 89, 0.08)' : 'rgba(255, 59, 48, 0.08)';
+                                const arrowSpan = `<span style="font-weight: bold; margin-right: 3px;">${arrow}</span>`;
+                                
+                                cellStyle = `color: ${colorVar}; font-weight: 600; background: ${bgVar};`;
+                                displayHTML = `${arrowSpan}${absVal.toFixed(2)}% ⚠️`;
+                            } else {
+                                cellStyle = `color: var(--text-color); opacity: 0.85;`;
+                                displayHTML = `${absVal.toFixed(2)}%`;
                             }
-                            tr.innerHTML += `<td ${cellClass}>${arrowSpan}${absVal.toFixed(2)}%${warningText}</td>`;
+                            tr.innerHTML += `<td style="${cellStyle}">${displayHTML}</td>`;
                         } else {
                             values[t] = null;
                             tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">-</td>`;
@@ -3606,10 +3670,12 @@
                     const val = row.values[t];
                     if (val !== null) {
                         const absVal = Math.abs(val);
-                        const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
-                        let cellVal = `${arrow} ${absVal.toFixed(2)}%`;
+                        let cellVal = "";
                         if (absVal >= threshold) {
-                            cellVal += " (Unbalance)";
+                            const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
+                            cellVal = `${arrow} ${absVal.toFixed(2)}% (Unbalance)`;
+                        } else {
+                            cellVal = `${absVal.toFixed(2)}%`;
                         }
                         rowCells.push(cellVal);
                     } else {
@@ -3717,15 +3783,79 @@
                             }
                         },
                         tooltip: {
-                            backgroundColor: chartSettings.tooltipBg,
-                            titleColor: chartSettings.textColor,
-                            bodyColor: chartSettings.textColor,
-                            titleFont: { family: 'Outfit', size: 13 },
-                            bodyFont: { family: 'Inter', size: 12 },
-                            borderColor: chartSettings.tooltipBorder,
-                            borderWidth: 1,
-                            footerColor: chartSettings.tooltipFooter,
-                            footerFont: { family: 'Inter', size: 11, weight: '600' },
+                            enabled: false, // Disable default canvas tooltip
+                            external: function(context) {
+                                // Tooltip Element
+                                let tooltipEl = document.getElementById('chartjs-tooltip');
+
+                                // Create element on first render
+                                if (!tooltipEl) {
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'chartjs-tooltip';
+                                    tooltipEl.innerHTML = '<table></table>';
+                                    document.body.appendChild(tooltipEl);
+                                }
+
+                                // Hide if no tooltip
+                                const tooltipModel = context.tooltip;
+                                if (tooltipModel.opacity === 0) {
+                                    tooltipEl.style.opacity = '0';
+                                    return;
+                                }
+
+                                // Set Text
+                                if (tooltipModel.body) {
+                                    const titleLines = tooltipModel.title || [];
+                                    const bodyLines = tooltipModel.body.map(bodyItem => bodyItem.lines[0]);
+                                    const footerLines = tooltipModel.footer || [];
+
+                                    let innerHtml = '<thead>';
+
+                                    titleLines.forEach(function(title) {
+                                        innerHtml += '<tr><th>' + title + '</th></tr>';
+                                    });
+                                    innerHtml += '</thead><tbody>';
+
+                                    bodyLines.forEach(function(body, i) {
+                                        const colors = tooltipModel.labelColors && tooltipModel.labelColors[i] ? tooltipModel.labelColors[i] : { backgroundColor: '#fff', borderColor: '#fff' };
+                                        const colorBox = `<span class="tooltip-color-box" style="background: ${colors.backgroundColor}; border: 1px solid ${colors.borderColor};"></span>`;
+                                        innerHtml += '<tr><td>' + colorBox + body + '</td></tr>';
+                                    });
+                                    innerHtml += '</tbody>';
+
+                                    if (footerLines.length) {
+                                        innerHtml += '<tfoot>';
+                                        footerLines.forEach(function(line, idx) {
+                                            let style = '';
+                                            if (idx === 0) {
+                                                style += 'border-top: 1px solid var(--card-border); padding-top: 6px; margin-top: 6px; ';
+                                            }
+                                            if (line.includes('▲')) {
+                                                style += 'color: var(--success); font-weight: 600;';
+                                            } else if (line.includes('▼')) {
+                                                style += 'color: var(--danger); font-weight: 600;';
+                                            } else {
+                                                style += 'color: var(--text-color); opacity: 0.85;';
+                                            }
+                                            innerHtml += '<tr><td style="' + style + '">' + line + '</td></tr>';
+                                        });
+                                        innerHtml += '</tfoot>';
+                                    }
+
+                                    const tableRoot = tooltipEl.querySelector('table');
+                                    tableRoot.innerHTML = innerHtml;
+                                }
+
+                                const position = context.chart.canvas.getBoundingClientRect();
+
+                                // Display, position, and set styles for font
+                                tooltipEl.style.opacity = '1';
+                                tooltipEl.style.position = 'absolute';
+                                tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY - 10 + 'px';
+                                tooltipEl.style.pointerEvents = 'none';
+                                tooltipEl.style.transform = 'translate(-50%, -100%)';
+                            },
                             callbacks: {
                                 footer: function(tooltipItems) {
                                     if (!tooltipItems || tooltipItems.length === 0) return '';
@@ -3789,11 +3919,13 @@
                                             const bandB = bands[j];
                                             const val = bandAverages[bandA] - bandAverages[bandB];
                                             const absVal = Math.abs(val);
-                                            const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
-                                            let lineText = `  ${bandA}-${bandB}: ${arrow} ${absVal.toFixed(2)}%`;
+                                            let lineText = "";
                                             if (absVal >= threshold) {
-                                                lineText += " ⚠️ Unbalance";
+                                                const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
+                                                lineText = `  ${bandA}-${bandB}: ${arrow} ${absVal.toFixed(2)}% ⚠️ Unbalance`;
                                                 hasUnbalance = true;
+                                            } else {
+                                                lineText = `  ${bandA}-${bandB}: ${absVal.toFixed(2)}%`;
                                             }
                                             footerLines.push(lineText);
                                             hasDiff = true;
@@ -3812,6 +3944,13 @@
                             }
                         },
                         zoom: {
+                            limits: {
+                                y: {
+                                    min: 0,
+                                    max: 100,
+                                    minRange: 100
+                                }
+                            },
                             zoom: {
                                 wheel: {
                                     enabled: true
@@ -3819,11 +3958,11 @@
                                 pinch: {
                                     enabled: true
                                 },
-                                mode: 'xy'
+                                mode: 'x'
                             },
                             pan: {
                                 enabled: true,
-                                mode: 'xy'
+                                mode: 'x'
                             }
                         }
                     },
