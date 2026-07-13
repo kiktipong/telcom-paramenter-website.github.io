@@ -1679,14 +1679,38 @@
             </div>
 
             <div id="uploader-collapsible-content" style="padding: 1.25rem 1.5rem;">
-                <div id="dropzone" class="upload-zone">
-                    <div class="upload-icon">
-                        <i data-lucide="file-spreadsheet" style="width: 32px; height: 32px;"></i>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+                    <!-- Main Performance Data Upload -->
+                    <div id="dropzone" class="upload-zone" style="display: flex; flex-direction: column; justify-content: center; min-height: 200px;">
+                        <div class="upload-icon">
+                            <i data-lucide="file-spreadsheet" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <h3 class="upload-title">1. อัปโหลดไฟล์ Performance (.xlsx)</h3>
+                        <p class="upload-desc">ลากไฟล์ FDD.xlsx / TDD.xlsx หรือคลิกเพื่อวิเคราะห์ข้อมูลประสิทธิภาพของสถานีฐาน</p>
+                        <div>
+                            <button class="upload-btn" onclick="document.getElementById('file-input').click()">เลือกไฟล์ Performance</button>
+                        </div>
+                        <input type="file" id="file-input" accept=".xlsx" multiple />
                     </div>
-                    <h3 class="upload-title">อัปโหลดไฟล์ข้อมูล LTE FDD / TDD (.xlsx)</h3>
-                    <p class="upload-desc">ลากไฟล์ตั้งแต่ 1 ไฟล์ขึ้นไปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์ (สามารถเลือกควบคู่กันได้หลายไฟล์เพื่อประมวลผลรวมข้อมูล)</p>
-                    <button class="upload-btn" onclick="document.getElementById('file-input').click()">เลือกไฟล์จากเครื่อง</button>
-                    <input type="file" id="file-input" accept=".xlsx" multiple />
+
+                    <!-- Parameter Mapping Upload -->
+                    <div id="param-dropzone" class="upload-zone" style="display: flex; flex-direction: column; justify-content: center; min-height: 200px; border-color: rgba(134, 48, 253, 0.25);">
+                        <div class="upload-icon" style="background: rgba(134, 48, 253, 0.05); color: #8630fd; border-color: rgba(134, 48, 253, 0.15);">
+                            <i data-lucide="database" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <h3 class="upload-title">2. อัปเดตฐานข้อมูลพารามิเตอร์ (.xlsx)</h3>
+                        <p class="upload-desc">ลากไฟล์ Parameter.xlsx มาที่นี่เพื่อแปลงเป็นข้อมูลจับคู่เซลล์แบบออฟไลน์บนบราวเซอร์</p>
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                            <button class="upload-btn" onclick="document.getElementById('param-file-input').click()" style="background: linear-gradient(135deg, #8630fd, #a855f7); box-shadow: 0 4px 15px rgba(134, 48, 253, 0.3);">เลือกไฟล์ Parameter</button>
+                            <button id="btn-download-js" class="upload-btn" onclick="downloadParameterJS()" style="display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-color); box-shadow: none;">
+                                <i data-lucide="download" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> ดาวน์โหลด .js
+                            </button>
+                        </div>
+                        <input type="file" id="param-file-input" accept=".xlsx" style="display: none;" />
+                        <div id="param-status-text" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4;">
+                            สถานะปัจจุบัน: พร้อมใช้งานฐานข้อมูลเริ่มต้นจากระบบ
+                        </div>
+                    </div>
                 </div>
 
                 <!-- List of loaded files -->
@@ -2213,12 +2237,26 @@
             lucide.createIcons();
             initDragAndDrop();
             setupEventListeners();
+            
+            // Initialize parameter database status text
+            const totalCells = window.PARAMETER_DB ? Object.keys(window.PARAMETER_DB).length : 0;
+            const paramStatus = document.getElementById("param-status-text");
+            if (paramStatus && totalCells > 0) {
+                paramStatus.innerHTML = `
+                    <span style="color: var(--success); font-weight:600;">✓ โหลดฐานข้อมูลแล้ว (${totalCells.toLocaleString()} เซลล์)</span>
+                `;
+                const btnDownload = document.getElementById("btn-download-js");
+                if (btnDownload) btnDownload.style.display = "inline-flex";
+            }
         });
 
         function initDragAndDrop() {
             const dropzone = document.getElementById("dropzone");
             const fileInput = document.getElementById("file-input");
+            const paramDropzone = document.getElementById("param-dropzone");
+            const paramFileInput = document.getElementById("param-file-input");
 
+            // Main Performance dropzone
             dropzone.addEventListener("dragover", (e) => {
                 e.preventDefault();
                 dropzone.classList.add("dragover");
@@ -2238,6 +2276,31 @@
             fileInput.addEventListener("change", (e) => {
                 if (e.target.files.length > 0) processFiles(e.target.files);
             });
+
+            // Parameter dropzone
+            if (paramDropzone) {
+                paramDropzone.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    paramDropzone.classList.add("dragover");
+                });
+
+                paramDropzone.addEventListener("dragleave", () => {
+                    paramDropzone.classList.remove("dragover");
+                });
+
+                paramDropzone.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    paramDropzone.classList.remove("dragover");
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) processParameterFile(files);
+                });
+            }
+
+            if (paramFileInput) {
+                paramFileInput.addEventListener("change", (e) => {
+                    if (e.target.files.length > 0) processParameterFile(e.target.files);
+                });
+            }
         }
 
         function setupEventListeners() {
@@ -2326,6 +2389,144 @@
             document.getElementById("progress-bar").style.width = percentage + "%";
             document.getElementById("progress-percentage").innerText = percentage + "%";
             document.getElementById("loading-text").innerText = text;
+        }
+
+        // Process Parameter file uploaded in the browser
+        async function processParameterFile(files) {
+            const file = files[0];
+            if (!file) return;
+
+            const overlay = document.getElementById("loading-overlay");
+            overlay.style.display = "flex";
+            updateProgress(10, `กำลังเปิดไฟล์พารามิเตอร์: ${file.name}...`);
+
+            try {
+                const arrayBuffer = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = err => reject(new Error(`ล้มเหลวในการอ่านไฟล์ ${file.name}`));
+                    reader.readAsArrayBuffer(file);
+                });
+
+                updateProgress(30, `กำลังอ่านเวิร์กบุ๊ก (ใช้เฉพาะ LTE_FDD และ NR_TDD)...`);
+                
+                // Read workbook parsing ONLY the FDD and TDD sheets to save memory and CPU time!
+                const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
+                    type: 'array',
+                    sheets: ['LTE_FDD', 'NR_TDD'],
+                    cellFormula: false,
+                    cellHTML: false,
+                    cellText: false,
+                    cellStyles: false,
+                    cellDates: false
+                });
+
+                const tempDb = {};
+                let fddCount = 0;
+                let tddCount = 0;
+
+                // 1. Parse LTE_FDD Sheet
+                if (workbook.SheetNames.includes("LTE_FDD")) {
+                    updateProgress(50, `กำลังแยกวิเคราะห์ชีต LTE_FDD...`);
+                    const sheet = workbook.Sheets["LTE_FDD"];
+                    const rows = XLSX.utils.sheet_to_json(sheet);
+                    rows.forEach(r => {
+                        const cellName = r["Cell_name"];
+                        if (cellName) {
+                            tempDb[String(cellName).trim()] = {
+                                siteCode: r["Site Code"] ? String(r["Site Code"]).trim() : "",
+                                sectorName: r["Sector name"] ? String(r["Sector name"]).trim() : "",
+                                direction: r["Direction"] ? String(r["Direction"]).trim() : ""
+                            };
+                            fddCount++;
+                        }
+                    });
+                }
+
+                // 2. Parse NR_TDD Sheet
+                if (workbook.SheetNames.includes("NR_TDD")) {
+                    updateProgress(75, `กำลังแยกวิเคราะห์ชีต NR_TDD...`);
+                    const sheet = workbook.Sheets["NR_TDD"];
+                    const rows = XLSX.utils.sheet_to_json(sheet);
+                    rows.forEach(r => {
+                        const siteCode = r["Site Code"] ? String(r["Site Code"]).trim() : "";
+                        const direction = r["Direction"] ? String(r["Direction"]).trim() : "";
+                        const sectorName = r["Carrier & Sector"] ? String(r["Carrier & Sector"]).trim() : "";
+                        
+                        const cell5g = r["Cell Name (5G NR)"];
+                        if (cell5g) {
+                            tempDb[String(cell5g).trim()] = {
+                                siteCode: siteCode,
+                                sectorName: sectorName,
+                                direction: direction
+                            };
+                            tddCount++;
+                        }
+                        
+                        const cellLte = r["Cell Name (LTE TDD)"];
+                        if (cellLte) {
+                            tempDb[String(cellLte).trim()] = {
+                                siteCode: siteCode,
+                                sectorName: sectorName,
+                                direction: direction
+                            };
+                            tddCount++;
+                        }
+                    });
+                }
+
+                // Save to window database
+                window.PARAMETER_DB = tempDb;
+                const totalCells = Object.keys(window.PARAMETER_DB).length;
+
+                updateProgress(95, `อัปเดตพารามิเตอร์เสร็จสมบูรณ์!`);
+                
+                // Update status text
+                document.getElementById("param-status-text").innerHTML = `
+                    <span style="color: var(--success); font-weight:600;">✓ อัปเดตพารามิเตอร์สำเร็จ (${totalCells.toLocaleString()} เซลล์)</span>
+                    <br/>FDD: ${fddCount.toLocaleString()} เซลล์ | TDD: ${tddCount.toLocaleString()} เซลล์
+                `;
+
+                // Show download button
+                document.getElementById("btn-download-js").style.display = "inline-flex";
+
+                showToast("success", `อัปโหลดฐานข้อมูลพารามิเตอร์สำเร็จ: พบ ${totalCells.toLocaleString()} เซลล์`);
+
+                // If performance data is already loaded, trigger re-evaluation of Parameter Mapping
+                if (rawPerformanceData.length > 0) {
+                    updatePerfBandDifferences();
+                    updatePivotTable();
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast("danger", `เกิดข้อผิดพลาดในการโหลดพารามิเตอร์: ${err.message}`);
+                document.getElementById("param-status-text").innerHTML = `
+                    <span style="color: var(--danger); font-weight:600;">✗ โหลดพารามิเตอร์ล้มเหลว</span>
+                `;
+            } finally {
+                overlay.style.display = "none";
+                // Reset file input so same file can be uploaded again if needed
+                document.getElementById("param-file-input").value = "";
+            }
+        }
+
+        // Download PARAMETER_DB as parameter_db.js
+        function downloadParameterJS() {
+            if (!window.PARAMETER_DB || Object.keys(window.PARAMETER_DB).length === 0) {
+                showToast("warning", "ไม่มีข้อมูลพารามิเตอร์สำหรับดาวน์โหลด");
+                return;
+            }
+
+            const jsContent = `window.PARAMETER_DB = ${JSON.stringify(window.PARAMETER_DB, null, 2)};`;
+            const blob = new Blob([jsContent], { type: "application/javascript;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "parameter_db.js");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("success", "ดาวน์โหลดไฟล์ parameter_db.js สำเร็จ");
         }
 
         // Main Files Processor supporting FDD & TDD merging
@@ -3215,15 +3416,15 @@
                 cellsArray.forEach(cell => {
                     const val = pivotMap[time][cell];
                     if (val !== undefined) {
-                        tr.innerHTML += `<td>${val.toFixed(4)}</td>`;
+                        tr.innerHTML += `<td>${val.toFixed(2)}</td>`;
                         rowSum += val;
                         colTotals[cell] += val;
                     } else {
-                        tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">0.0000</td>`;
+                        tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">0.00</td>`;
                     }
                 });
                 
-                tr.innerHTML += `<td class="pivot-total-col">${rowSum.toFixed(4)}</td>`;
+                tr.innerHTML += `<td class="pivot-total-col">${rowSum.toFixed(2)}</td>`;
                 grandTotalSum += rowSum;
                 tbody.appendChild(tr);
             });
@@ -3234,9 +3435,9 @@
             trTotal.innerHTML = `<td>Grand Total</td>`;
             
             cellsArray.forEach(cell => {
-                trTotal.innerHTML += `<td>${colTotals[cell].toFixed(4)}</td>`;
+                trTotal.innerHTML += `<td>${colTotals[cell].toFixed(2)}</td>`;
             });
-            trTotal.innerHTML += `<td class="pivot-total-col">${grandTotalSum.toFixed(4)}</td>`;
+            trTotal.innerHTML += `<td class="pivot-total-col">${grandTotalSum.toFixed(2)}</td>`;
             tbody.appendChild(trTotal);
             updatePerfBandDifferences();
         }
@@ -3363,7 +3564,9 @@
                             values[t] = val;
                             
                             const absVal = Math.abs(val);
-                            const sign = val > 0 ? '+' : '';
+                            const arrowSpan = val > 0 
+                                ? `<span style="color: var(--success); font-weight: bold; margin-right: 3px;">▲</span>` 
+                                : (val < 0 ? `<span style="color: var(--danger); font-weight: bold; margin-right: 3px;">▼</span>` : '');
                             
                             let cellClass = "";
                             let warningText = "";
@@ -3371,7 +3574,7 @@
                                 cellClass = 'style="color: #ff3b30; font-weight: 600; background: rgba(255, 59, 48, 0.05);"';
                                 warningText = ' ⚠️';
                             }
-                            tr.innerHTML += `<td ${cellClass}>${sign}${val.toFixed(4)}%${warningText}</td>`;
+                            tr.innerHTML += `<td ${cellClass}>${arrowSpan}${absVal.toFixed(2)}%${warningText}</td>`;
                         } else {
                             values[t] = null;
                             tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">-</td>`;
@@ -3402,9 +3605,10 @@
                 chronologicalTimes.forEach(t => {
                     const val = row.values[t];
                     if (val !== null) {
-                        const sign = val > 0 ? '+' : '';
-                        let cellVal = `${sign}${val.toFixed(4)}%`;
-                        if (Math.abs(val) >= threshold) {
+                        const absVal = Math.abs(val);
+                        const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
+                        let cellVal = `${arrow} ${absVal.toFixed(2)}%`;
+                        if (absVal >= threshold) {
                             cellVal += " (Unbalance)";
                         }
                         rowCells.push(cellVal);
@@ -3585,8 +3789,8 @@
                                             const bandB = bands[j];
                                             const val = bandAverages[bandA] - bandAverages[bandB];
                                             const absVal = Math.abs(val);
-                                            const sign = val > 0 ? '+' : '';
-                                            let lineText = `  ${bandA}-${bandB}: ${sign}${val.toFixed(4)}%`;
+                                            const arrow = val > 0 ? '▲' : (val < 0 ? '▼' : '');
+                                            let lineText = `  ${bandA}-${bandB}: ${arrow} ${absVal.toFixed(2)}%`;
                                             if (absVal >= threshold) {
                                                 lineText += " ⚠️ Unbalance";
                                                 hasUnbalance = true;
@@ -3710,21 +3914,21 @@
                 let rowCells = [];
                 cellsArray.forEach(cell => {
                     const val = pivotMap[time][cell] || 0;
-                    rowCells.push(val.toFixed(4));
+                    rowCells.push(val.toFixed(2));
                     rowSum += val;
                     colTotals[cell] += val;
                 });
                 
-                csvContent += `${time},${rowCells.join(",")},${rowSum.toFixed(4)}\n`;
+                csvContent += `${time},${rowCells.join(",")},${rowSum.toFixed(2)}\n`;
                 grandTotalSum += rowSum;
             });
 
             // Total row
             let totalRowCells = [];
             cellsArray.forEach(cell => {
-                totalRowCells.push(colTotals[cell].toFixed(4));
+                totalRowCells.push(colTotals[cell].toFixed(2));
             });
-            csvContent += `Grand Total,${totalRowCells.join(",")},${grandTotalSum.toFixed(4)}\n`;
+            csvContent += `Grand Total,${totalRowCells.join(",")},${grandTotalSum.toFixed(2)}\n`;
 
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
             const url = URL.createObjectURL(blob);
