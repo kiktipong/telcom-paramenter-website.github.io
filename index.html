@@ -2102,10 +2102,10 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem;">
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);" id="param-table-info">
-                            แสดง 0 ถึง 0 จาก 0 แถว
+                    <!-- Parameter Pagination Controls -->
+                    <div class="pagination-container" id="param-pagination-controls" style="display: none;">
+                        <div class="pagination-info" id="param-table-info">
+                            แสดงแถวที่ 0 ถึง 0 จากทั้งหมด 0 แถว
                         </div>
                         <div class="pagination-controls" id="param-pages-wrapper">
                             <!-- Pages will go here -->
@@ -3792,7 +3792,6 @@
                                 if (!tooltipEl) {
                                     tooltipEl = document.createElement('div');
                                     tooltipEl.id = 'chartjs-tooltip';
-                                    tooltipEl.innerHTML = '<table></table>';
                                     document.body.appendChild(tooltipEl);
                                 }
 
@@ -3809,27 +3808,22 @@
                                     const bodyLines = tooltipModel.body.map(bodyItem => bodyItem.lines[0]);
                                     const footerLines = tooltipModel.footer || [];
 
-                                    let innerHtml = '<thead>';
-
-                                    titleLines.forEach(function(title) {
-                                        innerHtml += '<tr><th>' + title + '</th></tr>';
-                                    });
-                                    innerHtml += '</thead><tbody>';
-
+                                    const hasFooter = footerLines.length > 0;
+                                    
+                                    let bodyHtml = '';
                                     bodyLines.forEach(function(body, i) {
                                         const colors = tooltipModel.labelColors && tooltipModel.labelColors[i] ? tooltipModel.labelColors[i] : { backgroundColor: '#fff', borderColor: '#fff' };
                                         const colorBox = `<span class="tooltip-color-box" style="background: ${colors.backgroundColor}; border: 1px solid ${colors.borderColor};"></span>`;
-                                        innerHtml += '<tr><td>' + colorBox + body + '</td></tr>';
+                                        bodyHtml += `<div style="display: flex; align-items: center; margin: 4px 0; font-size: 0.75rem;">${colorBox}${body}</div>`;
                                     });
-                                    innerHtml += '</tbody>';
 
-                                    if (footerLines.length) {
-                                        innerHtml += '<tfoot>';
-                                        footerLines.forEach(function(line, idx) {
-                                            let style = '';
-                                            if (idx === 0) {
-                                                style += 'border-top: 1px solid var(--card-border); padding-top: 6px; margin-top: 6px; ';
-                                            }
+                                    let htmlContent = '';
+                                    if (hasFooter) {
+                                        const titleLine = footerLines[0].replace(/^\n/, '');
+                                        let footerHtml = '';
+                                        for (let idx = 1; idx < footerLines.length; idx++) {
+                                            const line = footerLines[idx].trim();
+                                            let style = 'font-size: 0.75rem;';
                                             if (line.includes('▲')) {
                                                 style += 'color: var(--success); font-weight: 600;';
                                             } else if (line.includes('▼')) {
@@ -3837,24 +3831,60 @@
                                             } else {
                                                 style += 'color: var(--text-color); opacity: 0.85;';
                                             }
-                                            innerHtml += '<tr><td style="' + style + '">' + line + '</td></tr>';
-                                        });
-                                        innerHtml += '</tfoot>';
+                                            footerHtml += `<div style="${style}">${line}</div>`;
+                                        }
+
+                                        htmlContent = `
+                                            <div class="tooltip-flex" style="display: flex; gap: 16px;">
+                                                <!-- Left Column: Cell Values -->
+                                                <div class="tooltip-col-left" style="min-width: 140px;">
+                                                    <div style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">${titleLines[0] || ''}</div>
+                                                    <div>${bodyHtml}</div>
+                                                </div>
+                                                
+                                                <!-- Divider -->
+                                                <div style="width: 1px; background: var(--card-border); align-self: stretch;"></div>
+                                                
+                                                <!-- Right Column: Band Diff -->
+                                                <div class="tooltip-col-right" style="min-width: 140px;">
+                                                    <div style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">${titleLine}</div>
+                                                    <div style="display: flex; flex-direction: column; gap: 4px;">${footerHtml}</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        htmlContent = `
+                                            <div style="min-width: 140px;">
+                                                <div style="font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">${titleLines[0] || ''}</div>
+                                                <div>${bodyHtml}</div>
+                                            </div>
+                                        `;
                                     }
 
-                                    const tableRoot = tooltipEl.querySelector('table');
-                                    tableRoot.innerHTML = innerHtml;
+                                    tooltipEl.innerHTML = htmlContent;
                                 }
 
                                 const position = context.chart.canvas.getBoundingClientRect();
+                                const chartWidth = context.chart.width;
+                                let leftPos = position.left + window.pageXOffset + tooltipModel.caretX;
+                                let transformStyle = '';
+                                
+                                // Offset to the left or right of the hovered point to avoid blocking it
+                                if (tooltipModel.caretX > chartWidth / 2) {
+                                    leftPos -= 15;
+                                    transformStyle = 'translate(-100%, -50%)';
+                                } else {
+                                    leftPos += 15;
+                                    transformStyle = 'translate(0, -50%)';
+                                }
 
-                                // Display, position, and set styles for font
+                                // Display, position, and set styles
                                 tooltipEl.style.opacity = '1';
                                 tooltipEl.style.position = 'absolute';
-                                tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-                                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY - 10 + 'px';
+                                tooltipEl.style.left = leftPos + 'px';
+                                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
                                 tooltipEl.style.pointerEvents = 'none';
-                                tooltipEl.style.transform = 'translate(-50%, -100%)';
+                                tooltipEl.style.transform = transformStyle;
                             },
                             callbacks: {
                                 footer: function(tooltipItems) {
@@ -4474,8 +4504,10 @@
             
             if (filteredParamRows.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">ไม่พบข้อมูลตามเงื่อนไขตัวกรอง</td></tr>`;
-                if (info) info.innerText = "แสดง 0 ถึง 0 จาก 0 แถว";
+                if (info) info.innerText = "แสดงแถวที่ 0 ถึง 0 จากทั้งหมด 0 แถว";
                 if (pagesWrapper) pagesWrapper.innerHTML = "";
+                const controls = document.getElementById("param-pagination-controls");
+                if (controls) controls.style.display = "none";
                 return;
             }
             
@@ -4503,7 +4535,10 @@
             });
             
             tbody.innerHTML = html;
-            if (info) info.innerText = `แสดง ${startIdx + 1} ถึง ${endIdx} จาก ${filteredParamRows.length.toLocaleString()} แถว`;
+            if (info) info.innerText = `แสดงแถวที่ ${startIdx + 1} ถึง ${endIdx} จากทั้งหมด ${filteredParamRows.length.toLocaleString()} แถว`;
+            
+            const controls = document.getElementById("param-pagination-controls");
+            if (controls) controls.style.display = "flex";
             
             const totalPages = Math.ceil(filteredParamRows.length / paramRowsPerPage);
             buildParamPagination(totalPages);
@@ -4514,11 +4549,15 @@
             if (!wrapper) return;
             wrapper.innerHTML = "";
             
-            if (totalPages <= 1) return;
+            if (totalPages <= 1) {
+                const controls = document.getElementById("param-pagination-controls");
+                if (controls) controls.style.display = "none";
+                return;
+            }
             
             const prevBtn = document.createElement("button");
-            prevBtn.className = "page-btn";
-            prevBtn.innerHTML = '<i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>';
+            prevBtn.className = "btn-page";
+            prevBtn.innerHTML = '<i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>';
             prevBtn.disabled = paramCurrentPage === 1;
             prevBtn.onclick = () => {
                 if (paramCurrentPage > 1) {
@@ -4537,7 +4576,7 @@
             
             for (let i = startPage; i <= endPage; i++) {
                 const btn = document.createElement("button");
-                btn.className = `page-btn ${i === paramCurrentPage ? "active" : ""}`;
+                btn.className = `btn-page ${i === paramCurrentPage ? "active" : ""}`;
                 btn.innerText = i;
                 btn.onclick = () => {
                     paramCurrentPage = i;
@@ -4547,8 +4586,8 @@
             }
             
             const nextBtn = document.createElement("button");
-            nextBtn.className = "page-btn";
-            nextBtn.innerHTML = '<i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>';
+            nextBtn.className = "btn-page";
+            nextBtn.innerHTML = '<i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>';
             nextBtn.disabled = paramCurrentPage === totalPages;
             nextBtn.onclick = () => {
                 if (paramCurrentPage < totalPages) {
