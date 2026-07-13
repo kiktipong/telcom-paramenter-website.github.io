@@ -1,0 +1,4308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telecom Performance & Topology Analyzer</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js for beautiful visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Zoom Plugin dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Pre-compiled Parameter Database -->
+    <script src="parameter_db.js"></script>
+
+    <style>
+        :root {
+            --primary: #0071e3;
+            --primary-glow: rgba(0, 113, 227, 0.4);
+            --bg-color: #0b0c16;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f5f5f7;
+            --text-secondary: #86868b;
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            /* Theme overrides */
+            --header-bg: rgba(11, 12, 22, 0.6);
+            --logo-text-gradient: linear-gradient(to right, #fff, #a1a1a6);
+            --stat-val-gradient: linear-gradient(180deg, #fff 0%, #d2d2d7 100%);
+            --select-opt-bg: #0b0c16;
+            --border-glow: rgba(255, 255, 255, 0.1);
+            --chart-grid: rgba(255, 255, 255, 0.04);
+            --shadow-opacity: 0.2;
+            --modal-bg: rgba(20, 21, 38, 0.85);
+            
+            --th-bg: #141624;
+            --td-border: rgba(255, 255, 255, 0.03);
+            --td-color: #e5e5ea;
+            
+            --upload-border: rgba(255, 255, 255, 0.15);
+            --upload-bg: rgba(255, 255, 255, 0.01);
+            --stat-card-bg: rgba(255, 255, 255, 0.02);
+            --table-responsive-bg: rgba(0, 0, 0, 0.15);
+            
+            --btn-bg: rgba(255, 255, 255, 0.05);
+            --btn-hover-bg: rgba(255, 255, 255, 0.1);
+            --matrix-checked-bg: rgba(0, 113, 227, 0.15);
+            --matrix-checked-border: rgba(0, 113, 227, 0.3);
+            --select-bg: rgba(255, 255, 255, 0.04);
+            --select-focus-bg: rgba(255, 255, 255, 0.08);
+            
+            --tabs-bg: rgba(255, 255, 255, 0.03);
+            --blob-1-gradient: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.12) 40%, rgba(0, 0, 0, 0) 70%);
+            --blob-2-gradient: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(59, 130, 246, 0.12) 40%, rgba(0, 0, 0, 0) 70%);
+            --blob-3-gradient: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, rgba(239, 68, 68, 0.08) 40%, rgba(0, 0, 0, 0) 70%);
+            
+            --badge-sector-bg: rgba(134, 48, 253, 0.15);
+            --badge-sector-color: #b785ff;
+            --badge-sector-border: rgba(134, 48, 253, 0.2);
+        }
+
+        :root.light-mode {
+            --bg-color: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-border: rgba(0, 113, 227, 0.08);
+            --text-color: #111112;
+            --text-secondary: #4b4b4d;
+            --primary-glow: rgba(0, 113, 227, 0.15);
+            
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --logo-text-gradient: linear-gradient(to right, #0071e3, #8630fd);
+            --stat-val-gradient: linear-gradient(135deg, #111b47 0%, #0071e3 100%);
+            --select-opt-bg: #ffffff;
+            --border-glow: rgba(0, 113, 227, 0.04);
+            --chart-grid: rgba(0, 113, 227, 0.06);
+            --shadow-opacity: 0.05;
+            --modal-bg: rgba(255, 255, 255, 0.98);
+            
+            --th-bg: #eef6ff;
+            --td-border: rgba(0, 113, 227, 0.05);
+            --td-color: #111112;
+            
+            --upload-border: rgba(0, 113, 227, 0.15);
+            --upload-bg: rgba(0, 113, 227, 0.01);
+            --stat-card-bg: rgba(255, 255, 255, 0.85);
+            --table-responsive-bg: rgba(255, 255, 255, 0.6);
+            
+            --btn-bg: rgba(0, 113, 227, 0.04);
+            --btn-hover-bg: rgba(0, 113, 227, 0.08);
+            --matrix-checked-bg: rgba(0, 113, 227, 0.08);
+            --matrix-checked-border: rgba(0, 113, 227, 0.2);
+            --select-bg: rgba(255, 255, 255, 0.95);
+            --select-focus-bg: rgba(255, 255, 255, 1);
+            
+            --tabs-bg: rgba(0, 0, 0, 0.03);
+            --blob-1-gradient: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(168, 85, 247, 0.18) 40%, rgba(255, 255, 255, 0) 70%);
+            --blob-2-gradient: radial-gradient(circle, rgba(6, 182, 212, 0.22) 0%, rgba(59, 130, 246, 0.18) 40%, rgba(255, 255, 255, 0) 70%);
+            --blob-3-gradient: radial-gradient(circle, rgba(236, 72, 153, 0.18) 0%, rgba(239, 68, 68, 0.14) 40%, rgba(255, 255, 255, 0) 70%);
+            
+            --badge-sector-bg: rgba(134, 48, 253, 0.08);
+            --badge-sector-color: #7b2cbf;
+            --badge-sector-border: rgba(134, 48, 253, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated iOS Background Blobs */
+        .blobs-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: var(--blob-1-gradient);
+            filter: blur(80px);
+            border-radius: 50%;
+            animation: float 25s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            top: -150px;
+            left: -150px;
+        }
+
+        .blob-2 {
+            bottom: -200px;
+            right: -150px;
+            background: var(--blob-2-gradient);
+            animation-delay: -7s;
+            animation-duration: 30s;
+        }
+
+        .blob-3 {
+            top: 30%;
+            left: 60%;
+            width: 500px;
+            height: 500px;
+            background: var(--blob-3-gradient);
+            animation-delay: -12s;
+            animation-duration: 22s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(80px, 50px) scale(1.1) rotate(180deg); }
+            100% { transform: translate(-40px, 90px) scale(0.9) rotate(360deg); }
+        }
+
+        /* Glassmorphic Navbar */
+        header {
+            background: var(--header-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 0.5rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.4rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0071e3, #8630fd);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 113, 227, 0.4);
+        }
+
+        .logo-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: var(--logo-text-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Tabs Navigation */
+        .tabs-container {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--tabs-bg, rgba(255, 255, 255, 0.03));
+            border: 1px solid var(--card-border);
+            border-radius: 99px;
+            padding: 0.2rem;
+            align-self: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn {
+            padding: 0.4rem 1rem;
+            border-radius: 99px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            border: none;
+            background: none;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-color);
+            background: var(--btn-hover-bg);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: var(--primary);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            border: 2px dashed var(--upload-border, rgba(255, 255, 255, 0.15));
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--upload-bg, rgba(255, 255, 255, 0.01));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 113, 227, 0.03);
+            box-shadow: inset 0 0 20px rgba(0, 113, 227, 0.05);
+        }
+
+        .upload-zone.dragover .upload-icon {
+            transform: scale(1.1);
+            color: var(--primary);
+        }
+
+        .upload-icon {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 0.5rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .upload-desc {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, var(--primary), #0077ed);
+            color: white;
+            padding: 0.45rem 1.25rem;
+            border-radius: 99px;
+            border: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transition: var(--transition);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 113, 227, 0.6);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Enhanced Loading Overlay with Progress Bar */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 12, 22, 0.9);
+            backdrop-filter: blur(15px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .progress-container {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--primary), #a855f7);
+            border-radius: 10px;
+            transition: width 0.15s ease-out;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .progress-percentage {
+            font-family: 'Inter', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--stat-card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-card:nth-child(2)::after { background: #8630fd; }
+        .stat-card:nth-child(3)::after { background: var(--success); }
+        .stat-card:nth-child(4)::after { background: var(--warning); }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: var(--stat-val-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Performance Filter UI style */
+        .filter-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-inputs {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .filter-field label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .cell-selection-container {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .cell-selection-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .cell-checkboxes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.5rem;
+            max-height: 120px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .cell-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .cell-checkbox-label:hover {
+            color: var(--text-color);
+        }
+
+        .cell-checkbox-label input {
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .btn-small {
+            background: var(--btn-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-small:hover {
+            background: var(--btn-hover-bg);
+            border-color: var(--card-border);
+        }
+
+        .placeholder-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 0.75rem;
+        }
+
+        /* Dropdowns */
+        .select-filter-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-filter {
+            width: 90%;
+            background: var(--select-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 99px;
+            padding: 0.3rem 0.3rem 0.3rem 0.3rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            appearance: none;
+            transition: var(--transition);
+        }
+
+        .select-filter option {
+            background-color: var(--select-opt-bg);
+            color: var(--text-color);
+        }
+
+        .select-filter:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--select-focus-bg);
+        }
+
+        .select-filter-wrapper i {
+            position: absolute;
+            right: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Charts Section */
+        .chart-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-container canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        /* Tables & Filters Layout */
+        .controls-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.01);
+            padding: 1.25rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .filters-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--success), #2cb14f);
+            color: white;
+            border: none;
+            border-radius: 99px;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 199, 89, 0.5);
+        }
+
+        /* Band filter chips */
+        .band-chips {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .band-chip {
+            background: var(--btn-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .band-chip:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+        }
+
+        .band-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        /* Tables styling */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: var(--table-responsive-bg);
+            max-height: 500px;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        /* Sticky Header for Pivot */
+        th {
+            background: var(--th-bg);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        td {
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--td-border);
+            color: var(--td-color);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Totals Rows & Columns in Pivot */
+        .pivot-total-row {
+            background: rgba(255, 255, 255, 0.04);
+            font-weight: 600;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .pivot-total-row td {
+            color: var(--text-color);
+        }
+
+        .pivot-total-col {
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.01);
+            color: var(--text-color) !important;
+            border-left: 1px dashed var(--card-border);
+        }
+
+        tr {
+            transition: var(--transition);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+            color: white;
+        }
+
+        /* Badge design */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-band {
+            background: rgba(0, 113, 227, 0.15);
+            color: #389fff;
+            border: 1px solid rgba(0, 113, 227, 0.2);
+        }
+
+        .badge-sector-count {
+            background: var(--badge-sector-bg, rgba(134, 48, 253, 0.15));
+            color: var(--badge-sector-color, #b785ff);
+            border: 1px solid var(--badge-sector-border, rgba(134, 48, 253, 0.2));
+        }
+
+        .cell-tag-container {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+            max-width: 380px;
+        }
+
+        .cell-tag {
+            background: var(--btn-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Inter', monospace;
+        }
+
+        /* Pagination style */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-page {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-page:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-page:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-page.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(20, 20, 35, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            max-width: 450px;
+            pointer-events: auto;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--card-border);
+            background: rgba(11, 12, 22, 0.4);
+            margin-top: auto;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 12, 22, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: var(--modal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 80vh;
+            padding: 1.75rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 0.75rem;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--btn-hover-bg);
+            color: var(--text-color);
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+            margin-bottom: 1.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .modal-cell-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .modal-cell-tag {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-color);
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Inter', monospace;
+            transition: var(--transition);
+        }
+
+        .modal-cell-tag:hover {
+            background: rgba(0, 113, 227, 0.15);
+            border-color: rgba(0, 113, 227, 0.3);
+            color: #fff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            border-top: 1px solid var(--card-border);
+            padding-top: 1rem;
+        }
+
+        .btn-modal {
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-modal-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-modal-primary:hover {
+            background: #0077ed;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .btn-modal-secondary {
+            background: var(--btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+        }
+        .btn-modal-secondary:hover {
+            background: var(--btn-hover-bg);
+        }
+
+        .cell-tag-container.clickable {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cell-tag-container.clickable:hover .cell-tag {
+            background: rgba(0, 113, 227, 0.1);
+            border-color: rgba(0, 113, 227, 0.25);
+            color: var(--primary);
+        }
+
+        .cell-tag-container.clickable:hover .cell-tag.plus-tag {
+            background: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        /* Cell Selection Grid Table */
+        .cell-selection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            background: transparent;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .cell-selection-table th {
+            background: var(--th-bg);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--card-border);
+            border-right: 1px solid var(--card-border);
+        }
+
+        .cell-selection-table th:last-child {
+            border-right: none;
+        }
+
+        .cell-selection-table td {
+            padding: 0.4rem 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+            border-right: 1px solid var(--card-border);
+            font-size: 0.8rem;
+            vertical-align: middle;
+        }
+
+        .cell-selection-table td:last-child {
+            border-right: none;
+        }
+
+        .cell-selection-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .matrix-band-label {
+            font-weight: 600;
+            color: var(--text-color);
+            background: var(--table-header-bg);
+            white-space: nowrap;
+        }
+
+        .matrix-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.15rem 0.4rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .matrix-checkbox-label:hover {
+            background: var(--btn-hover-bg);
+            color: var(--text-color);
+        }
+
+        .matrix-checkbox-label:has(input[type="checkbox"]:checked) {
+            background: var(--matrix-checked-bg);
+            border-color: var(--matrix-checked-border);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .cell-selection-cell-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .matrix-checkbox-label input[type="checkbox"] {
+            cursor: pointer;
+            accent-color: var(--primary);
+            width: 12px;
+            height: 12px;
+        }
+
+        .matrix-cell-empty {
+            color: var(--text-secondary);
+            opacity: 0.25;
+            font-size: 0.75rem;
+        }
+
+        /* Adjust parent grid to block layout if table is present */
+        .cell-checkboxes-grid {
+            max-height: 280px; /* Increase to fit the matrix table beautifully! */
+        }
+
+        .cell-checkboxes-grid:has(table) {
+            display: block;
+        }
+
+        /* Stats Compact Grid for Header */
+        .stats-compact-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .stat-compact-card {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+            flex: 1;
+            min-width: 150px;
+            justify-content: space-between;
+        }
+        .stat-compact-label {
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 500;
+        }
+        .stat-compact-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+                .loaded-file-item button {
+            transition: color 0.2s ease;
+        }
+        .loaded-file-item button:hover {
+            color: #FF3B30 !important;
+        }
+
+        /* Responsive Header and Tabs styling */
+        @media (max-width: 992px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+                align-items: center;
+                text-align: center;
+            }
+            .logo-container {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            .tabs-container {
+                align-self: center;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        /* Compact Card Overrides for Performance Filters */
+        .glass-card.compact-card {
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            gap: 0.75rem;
+        }
+
+        .glass-card.compact-card .filter-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .glass-card.compact-card .filter-inputs {
+            gap: 1rem;
+        }
+
+        .glass-card.compact-card .filter-field {
+            gap: 0.35rem;
+            min-width: 200px;
+        }
+
+        .glass-card.compact-card .filter-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.1rem;
+        }
+
+        .glass-card.compact-card .select-filter {
+            padding: 0.45rem 2.25rem 0.45rem 0.85rem;
+            font-size: 0.8rem;
+        }
+
+        .glass-card.compact-card .select-filter-wrapper i {
+            width: 13px;
+            height: 13px;
+            right: 0.85rem;
+        }
+
+        .glass-card.compact-card .cell-selection-container {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            gap: 0.4rem;
+        }
+
+        .glass-card.compact-card .cell-selection-actions {
+            gap: 0.35rem;
+        }
+
+        .glass-card.compact-card .btn-small {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+            border-radius: 4px;
+        }
+
+        .glass-card.compact-card .cell-checkboxes-grid {
+            max-height: 140px; /* Reduced from 280px to make it very compact! */
+        }
+
+        .glass-card.compact-card .cell-selection-table th {
+            padding: 0.3rem 0.35rem;
+            font-size: 0.75rem;
+        }
+
+        .glass-card.compact-card .cell-selection-table td {
+            padding: 0.2rem 0.3rem;
+            font-size: 0.75rem;
+        }
+
+        .glass-card.compact-card .matrix-checkbox-label {
+            padding: 0.1rem 0.3rem;
+            font-size: 0.7rem;
+            gap: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .glass-card.compact-card .matrix-checkbox-label input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Floating AssistiveTouch Filter Panels */
+        .floating-filter-panel, .floating-topo-panel, .floating-param-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 25px;
+            width: 480px;
+            max-width: calc(100vw - 50px);
+            z-index: 999;
+            background: var(--modal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 var(--border-glow);
+            padding: 1rem 1.25rem;
+            display: none; /* hidden by default, toggled via JS */
+            flex-direction: column;
+            gap: 0.75rem;
+            animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+
+        .floating-topo-panel {
+            width: 360px; /* Slightly narrower since it has fewer controls */
+        }
+
+        .floating-param-panel {
+            width: 440px; /* Parameter mapping layout width */
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .floating-filter-panel .filter-title, .floating-topo-panel .filter-title, .floating-param-panel .filter-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .floating-filter-panel .filter-inputs, .floating-topo-panel .filter-inputs, .floating-param-panel .filter-inputs {
+            gap: 1rem;
+        }
+
+        .floating-filter-panel .filter-field, .floating-topo-panel .filter-field, .floating-param-panel .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            width: 100%;
+        }
+
+        .floating-filter-panel .filter-field label, .floating-topo-panel .filter-field label, .floating-param-panel .filter-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.1rem;
+        }
+
+        .floating-filter-panel .select-filter, .floating-topo-panel .select-filter, .floating-param-panel .select-filter {
+            padding: 0.45rem 2.25rem 0.45rem 0.85rem;
+            font-size: 0.8rem;
+        }
+
+        .floating-filter-panel .select-filter-wrapper i, .floating-topo-panel .select-filter-wrapper i, .floating-param-panel .select-filter-wrapper i {
+            width: 13px;
+            height: 13px;
+            right: 0.85rem;
+        }
+
+        .floating-filter-panel .cell-selection-container {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            gap: 0.4rem;
+        }
+
+        .floating-filter-panel .cell-selection-actions {
+            gap: 0.35rem;
+        }
+
+        .floating-filter-panel .btn-small {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+            border-radius: 4px;
+        }
+
+        .floating-filter-panel .cell-checkboxes-grid {
+            max-height: 140px;
+        }
+
+        .floating-filter-panel .cell-selection-table th {
+            padding: 0.3rem 0.35rem;
+            font-size: 0.75rem;
+        }
+
+        .floating-filter-panel .cell-selection-table td {
+            padding: 0.2rem 0.3rem;
+            font-size: 0.75rem;
+        }
+
+        .floating-filter-panel .matrix-checkbox-label {
+            padding: 0.1rem 0.3rem;
+            font-size: 0.7rem;
+            gap: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .floating-filter-panel .matrix-checkbox-label input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+        }
+
+        .assistive-touch-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 25px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .assistive-touch-btn::after {
+            content: '';
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .assistive-touch-btn:hover {
+            transform: scale(1.08) rotate(5deg);
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px var(--primary-glow);
+            color: #fff;
+        }
+
+        .assistive-touch-btn:hover::after {
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.1);
+        }
+
+        .assistive-touch-btn i {
+            width: 18px;
+            height: 18px;
+            z-index: 2;
+        }
+
+        .assistive-touch-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            transform: scale(0.95);
+        }
+        
+        .assistive-touch-btn.active::after {
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: scale(0.9);
+        }
+        
+        :root.light-mode .assistive-touch-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid rgba(0, 113, 227, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 113, 227, 0.15);
+            color: var(--primary);
+        }
+
+        :root.light-mode .assistive-touch-btn::after {
+            border-color: rgba(0, 113, 227, 0.2);
+        }
+        
+        :root.light-mode .assistive-touch-btn:hover,
+        :root.light-mode .assistive-touch-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        :root.light-mode .assistive-touch-btn:hover::after,
+        :root.light-mode .assistive-touch-btn.active::after {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        @media (max-width: 576px) {
+            .floating-filter-panel, .floating-topo-panel, .floating-param-panel {
+                bottom: 75px;
+                right: 15px;
+                max-width: calc(100vw - 30px);
+            }
+            .assistive-touch-btn {
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated background blobs -->
+    <div class="blobs-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Header bar -->
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 1rem;">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i data-lucide="radio-tower"></i>
+                </div>
+                <div>
+                    <div class="logo-title">LTE Performance & Topology Analyzer</div>
+                    <div class="logo-subtitle">Excel Sheet0 Interactive Dashboard</div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs in Header (hidden initially) -->
+            <div class="tabs-container" id="header-tabs-container" style="display: none; margin-bottom: 0;">
+                <button class="tab-btn active" id="btn-tab-perf" onclick="switchTab('perf')">Performance Analysis</button>
+                
+                <button class="tab-btn" id="btn-tab-topo" onclick="switchTab('topo')">Network Topology</button>
+                
+                <button class="tab-btn" id="btn-tab-param" onclick="switchTab('param')">Parameter Mapping</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle-btn" onclick="toggleTheme()" style="background: var(--btn-bg); border: 1px solid var(--card-border); border-radius: 6px; width: 28px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); outline: none; transition: var(--transition);" title="เปลี่ยนเป็นโหมดสว่าง (Switch to Light Mode)">
+                    <i data-lucide="sun" style="width: 14px; height: 14px;"></i>
+                </button>
+
+                <!-- Threshold input container in header -->
+                <div style="display: flex; align-items: center; gap: 0.35rem; background: var(--btn-bg); border: 1px solid var(--card-border); padding: 0.2rem 0.5rem; border-radius: 6px; height: 26px;">
+                    <label for="band-diff-threshold" style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0; white-space: nowrap; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                        <i data-lucide="alert-triangle" style="width: 12px; height: 12px; color: #ff9500;"></i> เกณฑ์ Unbalance
+                    </label>
+                    <input type="number" id="band-diff-threshold" value="30" min="0" max="100" step="1" onchange="handleThresholdChange()" style="width: 42px; padding: 0rem 0.2rem; border-radius: 4px; background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-color); text-align: center; font-size: 0.7rem; outline: none; height: 18px;" />
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">%</span>
+                </div>
+
+                <span style="font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
+                    <span style="display:inline-block; width: 6px; height: 6px; background: var(--success); border-radius:50%; box-shadow: 0 0 6px var(--success)"></span>
+                    Frontend Only
+                </span>
+            </div>
+        </div>
+
+        <!-- Header Stats Overview (hidden initially) -->
+        <div id="header-stats-bar" style="display: none; width: 100%; border-top: 1px solid var(--card-border); padding-top: 0.3rem; margin-top: 0.05rem; font-size: 0.75rem;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1.25rem; flex-wrap: wrap; color: var(--text-secondary); line-height: 1.5;">
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <i data-lucide="database" style="width: 13px; height: 13px; color: var(--primary);"></i>
+                    <span>ข้อมูลดิบ:</span>
+                    <span id="stat-total-rows" style="font-weight: 600; color: var(--text-color);">-</span>
+                </div>
+                <span style="color: var(--card-border); opacity: 0.5;">|</span>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--success);"></i>
+                    <span>ไซต์:</span>
+                    <span id="stat-total-sites" style="font-weight: 600; color: var(--text-color);">-</span>
+                </div>
+                <span style="color: var(--card-border); opacity: 0.5;">|</span>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <i data-lucide="radio" style="width: 13px; height: 13px; color: var(--accent);"></i>
+                    <span>เซลล์:</span>
+                    <span id="stat-total-cells" style="font-weight: 600; color: var(--text-color);">-</span>
+                </div>
+                <span style="color: var(--card-border); opacity: 0.5;">|</span>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <i data-lucide="layers" style="width: 13px; height: 13px; color: var(--warning);"></i>
+                    <span>แบนด์ที่พบ:</span>
+                    <span id="stat-bands-detected" style="display: inline-flex; align-items: center; gap: 0.25rem;">-</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- File upload card -->
+        <div class="glass-card" style="position: relative; padding: 0; overflow: hidden; margin-bottom: 1.5rem;">
+            <!-- Header bar for collapse -->
+            <div class="uploader-header" onclick="toggleUploaderCollapse()" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 1px solid var(--card-border); background: var(--btn-bg);">
+                <div style="font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                    <i data-lucide="folder-open" style="width: 15px; height: 15px; color: var(--primary);"></i>
+                    <span>ตัวจัดการข้อมูลนำเข้า (File & Import Manager)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--text-secondary);">
+                    <span id="uploader-collapse-text">ยุบแผงควบคุม</span>
+                    <i id="uploader-collapse-icon" data-lucide="chevron-up" style="width: 15px; height: 15px; transition: transform 0.2s;"></i>
+                </div>
+            </div>
+
+            <div id="uploader-collapsible-content" style="padding: 1.25rem 1.5rem;">
+                <div id="dropzone" class="upload-zone">
+                    <div class="upload-icon">
+                        <i data-lucide="file-spreadsheet" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <h3 class="upload-title">อัปโหลดไฟล์ข้อมูล LTE FDD / TDD (.xlsx)</h3>
+                    <p class="upload-desc">ลากไฟล์ตั้งแต่ 1 ไฟล์ขึ้นไปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์ (สามารถเลือกควบคู่กันได้หลายไฟล์เพื่อประมวลผลรวมข้อมูล)</p>
+                    <button class="upload-btn" onclick="document.getElementById('file-input').click()">เลือกไฟล์จากเครื่อง</button>
+                    <input type="file" id="file-input" accept=".xlsx" multiple />
+                </div>
+
+                <!-- List of loaded files -->
+                <div id="loaded-files-container" style="display: none; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--card-border);">
+                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="layers" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                        ไฟล์ที่โหลดอยู่ในระบบปัจจุบัน (Merged Datasets)
+                    </div>
+                    <div id="loaded-files-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading overlay with progress bar -->
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="progress-percentage" id="progress-percentage">0%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="loading-text" id="loading-text">กำลังเริ่มต้นโหลดไฟล์...</div>
+            </div>
+        </div>
+
+        <!-- Dashboard tab switching and contents (hidden initially) -->
+        <div id="dashboard-section" style="display: none; flex-direction: column; gap: 1.5rem;">
+
+            <!-- TAB 1 CONTENT: PERFORMANCE ANALYSIS -->
+            <div id="tab-perf-content" class="tab-content active">
+                
+                <!-- Performance Filters Panel (Floating Flyout) -->
+                <div class="floating-filter-panel" id="performance-filters-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%;">
+                        <div class="filter-title" style="margin-bottom: 0;">
+                            <i data-lucide="sliders-horizontal" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                            ตัวกรองการวิเคราะห์ประสิทธิภาพ (Performance Filters)
+                        </div>
+                        <button onclick="toggleFloatingFilterPanel()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 0.25rem; outline: none;" title="ปิด (Close)">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                    <div class="filter-inputs">
+                        <div class="filter-field">
+                            <label for="filter-enodeb">eNodeB CU Name</label>
+                            <div class="select-filter-wrapper">
+                                <select id="filter-enodeb" class="select-filter">
+                                    <option value="">เลือก eNodeB ทั้งหมด</option>
+                                </select>
+                                <i data-lucide="chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-field" style="flex: 2;">
+                            <label id="cell-name-filter-label">E-UTRAN FDD Cell Name (เลือกเพื่อแสดงแนวโน้มและตาราง)</label>
+                            <div class="cell-selection-container">
+                                <div class="cell-selection-actions">
+                                    <button class="btn-small" onclick="selectAllCells(true)">เลือกทั้งหมด</button>
+                                    <button class="btn-small" onclick="selectAllCells(false)">ล้างทั้งหมด</button>
+                                </div>
+                                <div class="cell-checkboxes-grid" id="cell-checkboxes-container">
+                                    <span class="placeholder-text">กรุณาเลือก eNodeB เพื่อแสดงรายชื่อเซลล์</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Chart Card -->
+                <div class="glass-card chart-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="trending-up" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            กราฟแนวโน้ม DL PRB Utilization Rate (%)
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn-export" onclick="resetChartZoom()" style="background: var(--btn-bg); border-color: var(--card-border); color: var(--text-color);">
+                                <i data-lucide="maximize-2" style="width: 16px; height: 16px;"></i>
+                                รีเซ็ตการซูม (Reset Zoom)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Pivot Table Card -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="table-2" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            ตารางสรุปผลข้อมูลแบบ Pivot (Begin Time x Cell Name)
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn-export" onclick="exportPivotCSV()">
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                ส่งออก Pivot เป็น CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Pivot Table -->
+                    <div class="table-responsive" style="max-height: 450px;">
+                        <table id="pivot-table">
+                            <thead>
+                                <tr id="pivot-header">
+                                    <th>Begin Time</th>
+                                    <th style="color: var(--text-secondary); font-weight: 400; text-align: center;">กรุณาเลือกเซลล์เพื่อแสดงโครงสร้างตาราง</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pivot-body">
+                                <tr>
+                                    <td style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                        ไม่มีข้อมูลดิบแสดงผล
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- eNodeB Band Differences Section -->
+                <div class="glass-card" id="perf-band-diff-section" style="margin-top: 1.5rem; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="scale" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            ตารางผลต่างค่าเฉลี่ยระหว่างคลื่นความถี่ (eNodeB Band Differences)
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn-export" onclick="exportPerfBandDifferencesCSV()">
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                ส่งออกเป็น CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table id="perf-band-diff-table">
+                            <thead id="perf-band-diff-header"></thead>
+                            <tbody id="perf-band-diff-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2 CONTENT: NETWORK TOPOLOGY -->
+            <div id="tab-topo-content" class="tab-content">
+                
+                <!-- Topology Filter Controls (Floating Flyout) -->
+                <div class="floating-topo-panel" id="topology-filters-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%;">
+                        <div class="filter-title" style="margin-bottom: 0;">
+                            <i data-lucide="filter" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                            ตัวกรองโครงสร้างเครือข่าย (Topology Filters)
+                        </div>
+                        <button onclick="toggleFloatingFilterPanel()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 0.25rem; outline: none;" title="ปิด (Close)">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
+                        <div class="filter-field">
+                            <label for="filter-site">Site ID / Name</label>
+                            <div class="select-filter-wrapper" id="filter-site-wrapper">
+                                <select id="filter-site" class="select-filter">
+                                    <option value="">เลือก Site ทั้งหมด</option>
+                                </select>
+                                <i data-lucide="chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label for="filter-sector-count">จำนวน Sector ใน Site</label>
+                            <div class="select-filter-wrapper">
+                                <select id="filter-sector-count" class="select-filter">
+                                    <option value="">จำนวน Sector ทั้งหมด</option>
+                                    <option value="1">1 Sector</option>
+                                    <option value="2">2 Sectors</option>
+                                    <option value="3">3 Sectors</option>
+                                    <option value="more">3 Sectors ขึ้นไป</option>
+                                </select>
+                                <i data-lucide="chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label>คลื่นความถี่ (Bands Filter)</label>
+                            <div class="band-chips" id="band-chips-container" style="margin-top: 0.15rem;">
+                                <!-- Will be dynamically generated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="network" style="width: 18px; height: 18px; color: #8630fd;"></i>
+                            การสรุปกลุ่มข้อมูลโครงสร้างเสา (Band / Site / Sector Summary)
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn-export" onclick="exportTopologyCSV()">
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                ส่งออก Topology เป็น CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Topology Table -->
+                    <div class="table-responsive">
+                        <table id="topology-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTopologyTable('band')">Band <i data-lucide="arrow-up-down" style="width: 12px; height: 12px;"></i></th>
+                                    <th onclick="sortTopologyTable('site')">Site <i data-lucide="arrow-up-down" style="width: 12px; height: 12px;"></i></th>
+                                    <th onclick="sortTopologyTable('sectorCount')">Sector Count <i data-lucide="arrow-up-down" style="width: 12px; height: 12px;"></i></th>
+                                    <th>Sectors Found</th>
+
+                                    <th onclick="sortTopologyTable('cellCount')">Cell Count <i data-lucide="arrow-up-down" style="width: 12px; height: 12px;"></i></th>
+                                    <th>Cell Names</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topology-body">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                        ไม่มีข้อมูลดิบแสดงผล
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Topology Pagination Controls -->
+                    <div class="pagination-container" id="topology-pagination-controls" style="display: none;">
+                        <div class="pagination-info" id="topology-pagination-info">
+                            Showing 0 to 0 of 0 entries
+                        </div>
+                        <div class="pagination-controls" id="topology-pages-wrapper">
+                            <!-- Pages will go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3 CONTENT: PARAMETER MAPPING -->
+            <div id="tab-param-content" class="tab-content">
+                
+                <!-- Parameter Mapping Filter Controls (Floating Flyout) -->
+                <div class="floating-param-panel" id="parameter-filters-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%;">
+                        <div class="filter-title" style="margin-bottom: 0;">
+                            <i data-lucide="filter" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                            ตัวกรองข้อมูลการแมป (Parameter Filters)
+                        </div>
+                        <button onclick="toggleFloatingFilterPanel()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 0.25rem; outline: none;" title="ปิด (Close)">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
+                        <div class="filter-field">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">ค้นหา Cell / Site Code</label>
+                            <div class="search-box-wrapper" style="position: relative; width: 100%;">
+                                <input type="text" id="param-search-input" placeholder="พิมพ์เพื่อค้นหา..." oninput="filterParameterMappingTable()" style="width: 100%; padding: 0.55rem 2.5rem 0.55rem 1rem; border-radius: 99px; background: var(--select-bg); border: 1px solid var(--card-border); color: var(--text-color); font-family: inherit; font-size: 0.85rem;" />
+                                <i data-lucide="search" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-secondary); pointer-events: none;"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-field">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">ตัวเลือก eNodeB / gNB</label>
+                            <div class="select-filter-wrapper" style="width: 100%;">
+                                <select id="param-enodeb-filter" class="select-filter" onchange="filterParameterMappingTable()">
+                                    <option value="">เลือก eNodeB ทั้งหมด</option>
+                                </select>
+                                <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+                            </div>
+                        </div>
+
+                        <div class="filter-field">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">สถานะการแมปพารามิเตอร์</label>
+                            <div class="select-filter-wrapper" style="width: 100%;">
+                                <select id="param-match-filter" class="select-filter" onchange="filterParameterMappingTable()">
+                                    <option value="all">ผลลัพธ์ทั้งหมด</option>
+                                    <option value="mapped">เฉพาะที่แมปเจอ</option>
+                                    <option value="unmapped">เฉพาะที่หาไม่เจอ</option>
+                                </select>
+                                <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+                            </div>
+                        </div>
+
+                        <div class="filter-field">
+                            <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">คลื่นความถี่ (Bands Filter)</label>
+                            <div class="band-chips" id="param-band-chips-container" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                <!-- Will be dynamically generated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="book-open" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            ข้อมูลพารามิเตอร์และการแมปข้อมูล (Parameter Mapping Info)
+                        </h3>
+                        <div class="action-buttons">
+                            <button class="btn-export" onclick="exportParameterMappingCSV()">
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                ส่งออกข้อมูลการแมปเป็น CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table id="parameter-mapping-table">
+                            <thead>
+                                <tr>
+                                    <th>Cell Name</th>
+                                    <th>eNodeB / gNB Name</th>
+                                    <th>Site Code (excel)</th>
+                                    <th>Site Code (Parameter)</th>
+                                    <th>Sector Name (Parameter)</th>
+                                    <th>Direction (Parameter)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parameter-mapping-body">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">กรุณานำเข้าไฟล์ข้อมูล FDD/TDD เพื่อวิเคราะห์และแมปข้อมูล</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);" id="param-table-info">
+                            แสดง 0 ถึง 0 จาก 0 แถว
+                        </div>
+                        <div class="pagination-controls" id="param-pages-wrapper">
+                            <!-- Pages will go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <footer>
+        <div>LTE Performance & Topology Analyzer © 2026 | Developed for telecom operators.</div>
+    </footer>
+
+    <!-- App Logic Script -->
+    <script>
+        // State variables
+        if (typeof window.PARAMETER_DB === 'undefined') {
+            window.PARAMETER_DB = {};
+        }
+        let paramCurrentPage = 1;
+        let paramRowsPerPage = 50;
+        let filteredParamRows = [];
+        let allParamRows = []; // list of { cellName, enodeb, siteCodeExcel, siteCodeParam, sectorName, direction, isMapped }
+
+        let rawPerformanceData = []; // list of { beginTime, enodeb, cellName, prb }
+        let parsedTopologyCells = []; // list of { site, band, sector, cellName }
+        let currentCellNameHeaderLabel = "E-UTRAN FDD Cell Name"; // Global label for FDD/TDD
+        let loadedFilesMap = {}; // key: filename, value: file stats and parsed rows
+        let topologySummary = [];     // list of { band, site, sectorCount, sectorsFound, cellCount, cellNames }
+        let filteredTopology = [];
+        let enodebToCellsMap = {};   // mapping enodeb -> cells set
+        let selectedCellsForPerf = new Set();
+        let chronologicalTimes = [];
+        let performanceChartInstance = null;
+        let perfBandDifferencesSummary = []; // Global band differences for Performance tab
+        let bandColors = {
+            "700": "#FF3B30",
+            "900": "#FF9500",
+            "1800": "#AF52DE",
+            "2100": "#0071E3",
+            "2600": "#34C759",
+            "2650": "#30B0C7",
+            "Unknown": "#8E8E93"
+        };
+        let topoSelectedBands = new Set();
+        let topoCurrentPage = 1;
+        let topoRowsPerPage = 10;
+        let topoSortColumn = "site";
+        let topoSortDirection = "asc";
+
+        // Theme Management Functions
+        function getChartThemeSettings() {
+            const isLight = document.documentElement.classList.contains('light-mode');
+            return {
+                textColor: isLight ? '#1d1d1f' : '#f3f4f6',
+                gridColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.04)',
+                tickColor: isLight ? '#6e6e73' : '#86868b',
+                tooltipBg: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(20, 20, 35, 0.95)',
+                tooltipBorder: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)',
+                tooltipFooter: isLight ? '#0071e3' : '#ff9500'
+            };
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem("theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (savedTheme === "light" || (!savedTheme && !prefersDark)) {
+                document.documentElement.classList.add("light-mode");
+                updateThemeButton("light");
+            } else {
+                document.documentElement.classList.remove("light-mode");
+                updateThemeButton("dark");
+            }
+            updateBandColorsUI();
+        }
+
+        function updateBandColorsUI() {
+            const isLight = document.documentElement.classList.contains('light-mode');
+            bandColors = isLight ? {
+                "700": "#D32F2F", // Darker Red
+                "900": "#E65100", // Darker Orange
+                "1800": "#7B1FA2", // Darker Purple
+                "2100": "#0D47A1", // Darker Blue
+                "2600": "#1B5E20", // Darker Green
+                "2650": "#006064", // Darker Cyan
+                "Unknown": "#555559"
+            } : {
+                "700": "#FF3B30",
+                "900": "#FF9500",
+                "1800": "#AF52DE",
+                "2100": "#0071E3",
+                "2600": "#34C759",
+                "2650": "#30B0C7",
+                "Unknown": "#8E8E93"
+            };
+
+            // Re-render detected bands in header if they exist
+            const uniqueBands = Array.from(new Set(parsedTopologyCells.map(c => c.band))).sort((a,b) => {
+                if (a === "Unknown") return 1;
+                if (b === "Unknown") return -1;
+                return parseInt(a) - parseInt(b);
+            });
+            const statBands = document.getElementById("stat-bands-detected");
+            if (statBands && uniqueBands.length > 0) {
+                statBands.innerHTML = uniqueBands.map(b => 
+                    `<span style="background: ${bandColors[b] || bandColors.Unknown}18; color: ${bandColors[b] || bandColors.Unknown}; padding: 0.05rem 0.35rem; border-radius: 4px; border: 1px solid ${bandColors[b] || bandColors.Unknown}30; font-size: 0.7rem; font-weight: 600;">${b}</span>`
+                ).join("");
+            }
+
+            // Re-render topology table
+            if (filteredTopology.length > 0) {
+                renderTopologyTable();
+            }
+        }
+
+        function toggleTheme() {
+            const isLight = document.documentElement.classList.toggle("light-mode");
+            localStorage.setItem("theme", isLight ? "light" : "dark");
+            updateThemeButton(isLight ? "light" : "dark");
+            updateChartTheme();
+            updateBandColorsUI();
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById("theme-toggle-btn");
+            if (!btn) return;
+            const icon = btn.querySelector("i");
+            if (!icon) return;
+            
+            if (theme === "light") {
+                icon.setAttribute("data-lucide", "moon");
+                btn.title = "เปลี่ยนเป็นโหมดมืด (Switch to Dark Mode)";
+            } else {
+                icon.setAttribute("data-lucide", "sun");
+                btn.title = "เปลี่ยนเป็นโหมดสว่าง (Switch to Light Mode)";
+            }
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        function updateChartTheme() {
+            if (!performanceChartInstance) return;
+            const settings = getChartThemeSettings();
+            
+            if (performanceChartInstance.options.plugins && performanceChartInstance.options.plugins.legend) {
+                performanceChartInstance.options.plugins.legend.labels.color = settings.textColor;
+            }
+            
+            if (performanceChartInstance.options.plugins && performanceChartInstance.options.plugins.tooltip) {
+                performanceChartInstance.options.plugins.tooltip.backgroundColor = settings.tooltipBg;
+                performanceChartInstance.options.plugins.tooltip.borderColor = settings.tooltipBorder;
+                if (performanceChartInstance.options.plugins.tooltip.titleColor !== undefined) {
+                    performanceChartInstance.options.plugins.tooltip.titleColor = settings.textColor;
+                    performanceChartInstance.options.plugins.tooltip.bodyColor = settings.textColor;
+                }
+                performanceChartInstance.options.plugins.tooltip.footerColor = settings.tooltipFooter;
+            }
+            
+            if (performanceChartInstance.options.scales) {
+                if (performanceChartInstance.options.scales.y) {
+                    if (performanceChartInstance.options.scales.y.title) {
+                        performanceChartInstance.options.scales.y.title.color = settings.textColor;
+                    }
+                    if (performanceChartInstance.options.scales.y.grid) {
+                        performanceChartInstance.options.scales.y.grid.color = settings.gridColor;
+                    }
+                    if (performanceChartInstance.options.scales.y.ticks) {
+                        performanceChartInstance.options.scales.y.ticks.color = settings.tickColor;
+                    }
+                }
+                if (performanceChartInstance.options.scales.x && performanceChartInstance.options.scales.x.ticks) {
+                    performanceChartInstance.options.scales.x.ticks.color = settings.tickColor;
+                }
+            }
+            
+            performanceChartInstance.update();
+        }
+
+        // Initialize Lucide Icons & UI events
+        document.addEventListener("DOMContentLoaded", () => {
+            initTheme();
+            lucide.createIcons();
+            initDragAndDrop();
+            setupEventListeners();
+        });
+
+        function initDragAndDrop() {
+            const dropzone = document.getElementById("dropzone");
+            const fileInput = document.getElementById("file-input");
+
+            dropzone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropzone.classList.add("dragover");
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.classList.remove("dragover");
+            });
+
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.classList.remove("dragover");
+                const files = e.dataTransfer.files;
+                if (files.length > 0) processFiles(files);
+            });
+
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files.length > 0) processFiles(e.target.files);
+            });
+        }
+
+        function setupEventListeners() {
+            // Topology tab filters
+            document.getElementById("filter-site").addEventListener("change", applyTopologyFilters);
+            document.getElementById("filter-sector-count").addEventListener("change", applyTopologyFilters);
+            
+            // Performance tab eNodeB filter
+            document.getElementById("filter-enodeb").addEventListener("change", handleEnodebChange);
+
+            // Day Compare tab eNodeB filter
+        }
+
+        // Switch Active Tab
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(content => {
+                content.classList.remove("active");
+                content.style.display = "none";
+            });
+
+            // Hide all panels first
+            const perfPanel = document.getElementById("performance-filters-panel");
+            const topoPanel = document.getElementById("topology-filters-panel");
+            const paramPanel = document.getElementById("parameter-filters-panel");
+            if (perfPanel) perfPanel.style.display = "none";
+            if (topoPanel) topoPanel.style.display = "none";
+            if (paramPanel) paramPanel.style.display = "none";
+            
+            const triggerBtn = document.getElementById("assistive-filter-trigger");
+            if (triggerBtn) triggerBtn.classList.remove("active");
+
+            if (tabId === 'perf') {
+                document.getElementById("btn-tab-perf").classList.add("active");
+                const perfContent = document.getElementById("tab-perf-content");
+                perfContent.classList.add("active");
+                perfContent.style.display = "block";
+            } else if (tabId === 'topo') {
+                document.getElementById("btn-tab-topo").classList.add("active");
+                const topoContent = document.getElementById("tab-topo-content");
+                topoContent.classList.add("active");
+                topoContent.style.display = "block";
+            } else if (tabId === 'param') {
+                document.getElementById("btn-tab-param").classList.add("active");
+                const paramContent = document.getElementById("tab-param-content");
+                paramContent.classList.add("active");
+                paramContent.style.display = "block";
+                
+                // Render the Parameter mapping table
+                renderParameterMappingTable();
+            }
+
+            // Show floating filter button if data is loaded (for any tab!)
+            if (triggerBtn) {
+                if (rawPerformanceData.length > 0 || parsedTopologyCells.length > 0) {
+                    triggerBtn.style.display = "flex";
+                } else {
+                    triggerBtn.style.display = "none";
+                }
+            }
+        }
+
+        // Toast notifications
+        function showToast(type, message) {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = `toast toast-${type}`;
+            const iconName = type === "success" ? "check-circle" : "alert-triangle";
+            
+            toast.innerHTML = `
+                <i data-lucide="${iconName}" style="width: 18px; height: 18px;"></i>
+                <div class="toast-content">${message}</div>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.add("show"), 50);
+            setTimeout(() => {
+                toast.classList.remove("show");
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        // Dynamic Loading Progress
+        function updateProgress(percentage, text) {
+            document.getElementById("progress-bar").style.width = percentage + "%";
+            document.getElementById("progress-percentage").innerText = percentage + "%";
+            document.getElementById("loading-text").innerText = text;
+        }
+
+        // Main Files Processor supporting FDD & TDD merging
+        async function processFiles(files) {
+            const fileArray = Array.from(files);
+            if (fileArray.length === 0) return;
+
+            const overlay = document.getElementById("loading-overlay");
+            overlay.style.display = "flex";
+            
+            try {
+                for (let i = 0; i < fileArray.length; i++) {
+                    const file = fileArray[i];
+                    const progressBase = Math.floor((i / fileArray.length) * 80);
+                    
+                    updateProgress(progressBase + 5, `กำลังเปิดไฟล์ที่ ${i + 1} จาก ${fileArray.length}: ${file.name}...`);
+                    
+                    // Check if file is Parameter mapping file
+                    if (file.name.toLowerCase().includes("parameter")) {
+                        updateProgress(progressBase + 10, `กำลังอ่านไฟล์ Parameter: ${file.name}...`);
+                        
+                        const arrayBuffer = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = e => resolve(e.target.result);
+                            reader.onerror = err => reject(new Error(`ล้มเหลวในการอ่านไฟล์ ${file.name}`));
+                            reader.readAsArrayBuffer(file);
+                        });
+                        
+                        updateProgress(progressBase + 25, `กำลังแยกวิเคราะห์ข้อมูล Parameter...`);
+                        const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
+                            type: 'array',
+                            cellFormula: false,
+                            cellHTML: false,
+                            cellText: false,
+                            cellStyles: false,
+                            cellDates: false
+                        });
+                        
+                        window.PARAMETER_DB = {};
+                        
+                        // Parse LTE_FDD sheet
+                        if (workbook.SheetNames.includes("LTE_FDD")) {
+                            updateProgress(progressBase + 45, `กำลังนำเข้าพารามิเตอร์ FDD...`);
+                            const sheet = workbook.Sheets["LTE_FDD"];
+                            const rows = XLSX.utils.sheet_to_json(sheet);
+                            rows.forEach(r => {
+                                const cellName = r["Cell_name"];
+                                if (cellName) {
+                                    window.PARAMETER_DB[String(cellName).trim()] = {
+                                        siteCode: r["Site Code"] ? String(r["Site Code"]).trim() : "",
+                                        sectorName: r["Sector name"] ? String(r["Sector name"]).trim() : "",
+                                        direction: r["Direction"] ? String(r["Direction"]).trim() : ""
+                                    };
+                                }
+                            });
+                        }
+                        
+                        // Parse NR_TDD sheet
+                        if (workbook.SheetNames.includes("NR_TDD")) {
+                            updateProgress(progressBase + 65, `กำลังนำเข้าพารามิเตอร์ TDD...`);
+                            const sheet = workbook.Sheets["NR_TDD"];
+                            const rows = XLSX.utils.sheet_to_json(sheet);
+                            rows.forEach(r => {
+                                const siteCode = r["Site Code"] ? String(r["Site Code"]).trim() : "";
+                                const direction = r["Direction"] ? String(r["Direction"]).trim() : "";
+                                const sectorName = r["Carrier & Sector"] ? String(r["Carrier & Sector"]).trim() : "";
+                                
+                                const cell5g = r["Cell Name (5G NR)"];
+                                if (cell5g) {
+                                    window.PARAMETER_DB[String(cell5g).trim()] = {
+                                        siteCode: siteCode,
+                                        sectorName: sectorName,
+                                        direction: direction
+                                    };
+                                }
+                                
+                                const cellLte = r["Cell Name (LTE TDD)"];
+                                if (cellLte) {
+                                    window.PARAMETER_DB[String(cellLte).trim()] = {
+                                        siteCode: siteCode,
+                                        sectorName: sectorName,
+                                        direction: direction
+                                    };
+                                }
+                            });
+                        }
+                        
+                        showToast("success", `นำเข้าพารามิเตอร์สำเร็จ: ${Object.keys(window.PARAMETER_DB).length.toLocaleString()} เซลล์`);
+                        continue;
+                    }
+                    
+                    // Read file as ArrayBuffer
+                    const arrayBuffer = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = err => reject(new Error(`ล้มเหลวในการอ่านไฟล์ ${file.name}`));
+                        reader.readAsArrayBuffer(file);
+                    });
+                    
+                    updateProgress(progressBase + 15, `กำลังแกะ XML ของไฟล์ที่ ${i + 1}...`);
+                    
+                    const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
+                        type: 'array',
+                        sheets: ['Sheet0'],
+                        cellFormula: false,
+                        cellHTML: false,
+                        cellText: false,
+                        cellStyles: false,
+                        cellDates: true
+                    });
+                    
+                    const sheetName = 'Sheet0';
+                    if (!workbook.SheetNames.includes(sheetName)) {
+                        throw new Error(`ไม่พบชีตชื่อ 'Sheet0' ในไฟล์ ${file.name}!`);
+                    }
+                    
+                    updateProgress(progressBase + 25, `กำลังประมวลผลแถวข้อมูลของไฟล์ที่ ${i + 1}...`);
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // 1. Read row 0 (headers)
+                    const headerData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 0 });
+                    if (headerData.length === 0) {
+                        throw new Error(`ชีต Sheet0 ในไฟล์ ${file.name} ไม่มีข้อมูลใด ๆ!`);
+                    }
+                    
+                    const headers = headerData[0];
+                    const beginTimeIdx = headers.indexOf("Begin Time");
+                    const enodebIdx = headers.indexOf("eNodeB CU Name");
+                    
+                    let cellNameIdx = headers.indexOf("E-UTRAN FDD Cell Name");
+                    let fileIsFDD = false;
+                    let fileIsTDD = false;
+                    if (cellNameIdx !== -1) {
+                        fileIsFDD = true;
+                    } else {
+                        cellNameIdx = headers.indexOf("E-UTRAN TDD Cell Name");
+                        if (cellNameIdx !== -1) {
+                            fileIsTDD = true;
+                        }
+                    }
+                    
+                    const prbIdx = headers.indexOf("DL PRB Utilization Rate(%)");
+                    
+                    if (beginTimeIdx === -1 || enodebIdx === -1 || cellNameIdx === -1 || prbIdx === -1) {
+                        throw new Error(`ไม่พบหัวข้อคอลัมน์ที่จำเป็นในไฟล์ ${file.name}: 'Begin Time', 'eNodeB CU Name', 'E-UTRAN FDD Cell Name' (หรือ 'E-UTRAN TDD Cell Name'), หรือ 'DL PRB Utilization Rate(%)'`);
+                    }
+                    
+                    // Get sheet total row count
+                    const ref = worksheet['!ref'] || "A1:A100000";
+                    const totalRows = parseInt(ref.split(':')[1].replace(/[^0-9]/g, '')) || 100000;
+                    
+                    let filePerformanceRows = [];
+                    let fileEnodebCellsMap = {};
+                    let fileCellNamesSet = new Set();
+                    let fileTimesSet = new Set();
+                    let fileParsedTopologyCells = [];
+                    
+                    // High-speed direct cell lookup
+                    for (let r = 1; r < totalRows; r++) {
+                        const timeCellRef = XLSX.utils.encode_cell({ r: r, c: beginTimeIdx });
+                        const enodebCellRef = XLSX.utils.encode_cell({ r: r, c: enodebIdx });
+                        const cellNameCellRef = XLSX.utils.encode_cell({ r: r, c: cellNameIdx });
+                        const prbCellRef = XLSX.utils.encode_cell({ r: r, c: prbIdx });
+                        
+                        const timeCell = worksheet[timeCellRef];
+                        const enCell = worksheet[enodebCellRef];
+                        const cnCell = worksheet[cellNameCellRef];
+                        const prCell = worksheet[prbCellRef];
+                        
+                        if (!timeCell || !enCell || !cnCell || !prCell) continue;
+                        
+                        // Parse values
+                        let beginTime = "";
+                        if (timeCell.t === 'd') {
+                            const d = timeCell.v;
+                            const yyyy = d.getUTCFullYear();
+                            const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                            const dd = String(d.getUTCDate()).padStart(2, '0');
+                            const hh = String(d.getUTCHours()).padStart(2, '0');
+                            const min = String(d.getUTCMinutes()).padStart(2, '0');
+                            const ss = String(d.getUTCSeconds()).padStart(2, '0');
+                            beginTime = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+                        } else {
+                            beginTime = String(timeCell.v).trim();
+                        }
+                        
+                        const enodeb = String(enCell.v).trim();
+                        const cellName = String(cnCell.v).trim();
+                        
+                        let prbVal = 0;
+                        if (prCell.v !== undefined) {
+                            prbVal = parseFloat(prCell.v);
+                            if (prbVal < 1.0 && prbVal > 0.0) {
+                                prbVal = prbVal * 100;
+                            }
+                        }
+                        
+                        filePerformanceRows.push({
+                            beginTime,
+                            enodeb,
+                            cellName,
+                            prb: prbVal
+                        });
+                        
+                        fileCellNamesSet.add(cellName);
+                        if (beginTime) fileTimesSet.add(beginTime);
+                        
+                        // Map enodeb -> cells
+                        if (!fileEnodebCellsMap[enodeb]) {
+                            fileEnodebCellsMap[enodeb] = new Set();
+                        }
+                        fileEnodebCellsMap[enodeb].add(cellName);
+                        
+                        // Parse Topology
+                        const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                        const match = cellName.match(cellRegex);
+                        if (match) {
+                            const site = match[1];
+                            const suffix = match[2];
+                            
+                            let band = "Unknown";
+                            if (suffix.startsWith("07")) band = "700";
+                            else if (suffix.startsWith("09")) band = "900";
+                            else if (suffix.startsWith("18")) band = "1800";
+                            else if (suffix.startsWith("21")) band = "2100";
+                            else if (suffix.startsWith("265")) band = "2650";
+                            else if (suffix.startsWith("26")) band = "2600";
+                            
+                            const lastChar = suffix.charAt(3).toUpperCase();
+                            let sector = "Sector " + lastChar;
+                            if (lastChar === 'A') sector = "Sector 1";
+                            else if (lastChar === 'B') sector = "Sector 2";
+                            else if (lastChar === 'C') sector = "Sector 3";
+                            else if (lastChar === 'P') sector = "Sector 6";
+                            else if (lastChar !== '1' && lastChar !== '2' && lastChar !== '3' && lastChar !== '6' && lastChar !== '7' && lastChar !== '8') {
+                                sector = "Unknown";
+                            }
+                            
+                            const isDup = fileParsedTopologyCells.some(c => c.cellName === cellName);
+                            if (!isDup) {
+                                fileParsedTopologyCells.push({ site, band, sector, cellName });
+                            }
+                        }
+                    }
+                    
+                    // Save to global file map
+                    loadedFilesMap[file.name] = {
+                        performanceRows: filePerformanceRows,
+                        enodebCellsMapTemp: fileEnodebCellsMap,
+                        cellNamesSet: fileCellNamesSet,
+                        timesSet: fileTimesSet,
+                        parsedTopologyCells: fileParsedTopologyCells,
+                        hasFDD: fileIsFDD,
+                        hasTDD: fileIsTDD
+                    };
+                }
+                
+                updateProgress(85, "กำลังผสานรวมข้อมูล FDD & TDD...");
+                rebuildCombinedDataset();
+                
+                updateProgress(100, "ประมวลผลไฟล์ทั้งหมดเสร็จสมบูรณ์!");
+                setTimeout(() => {
+                    overlay.style.display = "none";
+                    showToast("success", `เปิดอ่านและผสานรวมข้อมูลจาก ${fileArray.length} ไฟล์ เรียบร้อยแล้ว!`);
+                    toggleUploaderCollapse(false); // Auto-collapse the uploader panel after loading
+                }, 500);
+                
+            } catch (error) {
+                overlay.style.display = "none";
+                showToast("error", "การประมวลผลไฟล์ล้มเหลว: " + error.message);
+                console.error(error);
+            }
+        }
+
+        // Rebuild combined FDD & TDD datasets in memory
+        function rebuildCombinedDataset() {
+            let combinedPerformanceRows = [];
+            let combinedEnodebCellsMap = {};
+            let combinedCellNamesSet = new Set();
+            let combinedTimesSet = new Set();
+            let combinedParsedTopologyCells = [];
+            
+            let totalFDD = false;
+            let totalTDD = false;
+            
+            const fileNames = Object.keys(loadedFilesMap);
+            
+            if (fileNames.length === 0) {
+                // Clear state
+                rawPerformanceData = [];
+                parsedTopologyCells = [];
+                enodebToCellsMap = {};
+                chronologicalTimes = [];
+                topologySummary = [];
+                filteredTopology = [];
+                
+                document.getElementById("dashboard-section").style.display = "none";
+                document.getElementById("header-tabs-container").style.display = "none";
+                document.getElementById("header-stats-bar").style.display = "none";
+                document.getElementById("loaded-files-container").style.display = "none";
+                document.getElementById("loaded-files-list").innerHTML = "";
+                
+                // Hide floating filter button and panels
+                const triggerBtn = document.getElementById("assistive-filter-trigger");
+                if (triggerBtn) triggerBtn.style.display = "none";
+                const perfPanel = document.getElementById("performance-filters-panel");
+                const topoPanel = document.getElementById("topology-filters-panel");
+                const paramPanel = document.getElementById("parameter-filters-panel");
+                if (perfPanel) perfPanel.style.display = "none";
+                if (topoPanel) topoPanel.style.display = "none";
+                if (paramPanel) paramPanel.style.display = "none";
+                if (triggerBtn) triggerBtn.classList.remove("active");
+                
+                // Clear parameter mapping rows
+                allParamRows = [];
+                filteredParamRows = [];
+                const tbody = document.getElementById("parameter-mapping-body");
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">กรุณานำเข้าไฟล์ข้อมูล FDD/TDD เพื่อวิเคราะห์และแมปข้อมูล</td></tr>`;
+                }
+                const info = document.getElementById("param-table-info");
+                if (info) info.innerText = "แสดง 0 ถึง 0 จาก 0 แถว";
+                const pagesWrapper = document.getElementById("param-pages-wrapper");
+                if (pagesWrapper) pagesWrapper.innerHTML = "";
+                
+                return;
+            }
+            
+            fileNames.forEach(fname => {
+                const fData = loadedFilesMap[fname];
+                
+                // Merge performance rows
+                combinedPerformanceRows = combinedPerformanceRows.concat(fData.performanceRows);
+                
+                // Merge enodeb map
+                for (const enodeb in fData.enodebCellsMapTemp) {
+                    if (!combinedEnodebCellsMap[enodeb]) {
+                        combinedEnodebCellsMap[enodeb] = new Set();
+                    }
+                    fData.enodebCellsMapTemp[enodeb].forEach(cname => {
+                        combinedEnodebCellsMap[enodeb].add(cname);
+                    });
+                }
+                
+                // Merge unique cell names
+                fData.cellNamesSet.forEach(cname => {
+                    combinedCellNamesSet.add(cname);
+                });
+                
+                // Merge unique times
+                fData.timesSet.forEach(t => {
+                    combinedTimesSet.add(t);
+                });
+                
+                // Merge topology cells preventing duplicates
+                fData.parsedTopologyCells.forEach(cell => {
+                    const isDup = combinedParsedTopologyCells.some(c => c.cellName === cell.cellName);
+                    if (!isDup) {
+                        combinedParsedTopologyCells.push(cell);
+                    }
+                });
+                
+                if (fData.hasFDD) totalFDD = true;
+                if (fData.hasTDD) totalTDD = true;
+            });
+            
+            // Save to global variables
+            rawPerformanceData = combinedPerformanceRows;
+            enodebToCellsMap = combinedEnodebCellsMap;
+            chronologicalTimes = Array.from(combinedTimesSet).sort();
+            parsedTopologyCells = combinedParsedTopologyCells;
+            
+            if (totalFDD && totalTDD) {
+                currentCellNameHeaderLabel = "E-UTRAN FDD / TDD Cell Name";
+            } else if (totalTDD) {
+                currentCellNameHeaderLabel = "E-UTRAN TDD Cell Name";
+            } else {
+                currentCellNameHeaderLabel = "E-UTRAN FDD Cell Name";
+            }
+            
+            // Update UI labels dynamically
+            document.getElementById("cell-name-filter-label").innerText = `${currentCellNameHeaderLabel} (เลือกเพื่อแสดงแนวโน้มและตาราง)`;
+
+            
+            // Topology grouping Band + Site
+            const groups = {};
+            parsedTopologyCells.forEach(cell => {
+                const key = `${cell.band}_${cell.site}`;
+                if (!groups[key]) {
+                    groups[key] = {
+                        band: cell.band,
+                        site: cell.site,
+                        sectors: new Set(),
+                        cells: [],
+                        sectorCounts: {}
+                    };
+                }
+                groups[key].sectors.add(cell.sector);
+                groups[key].cells.push(cell.cellName);
+                groups[key].sectorCounts[cell.sector] = (groups[key].sectorCounts[cell.sector] || 0) + 1;
+            });
+            
+            const uniqueSites = Array.from(new Set(parsedTopologyCells.map(c => c.site))).sort();
+            const uniqueBands = Array.from(new Set(parsedTopologyCells.map(c => c.band))).sort((a,b) => {
+                if (a === "Unknown") return 1;
+                if (b === "Unknown") return -1;
+                return parseInt(a) - parseInt(b);
+            });
+            
+            topologySummary = Object.values(groups).map(g => {
+                const sectorList = Array.from(g.sectors).sort();
+                const sectorCountsFormatted = sectorList.map(s => `${s}: ${g.sectorCounts[s]}`).join(", ");
+                return {
+                    band: g.band,
+                    site: g.site,
+                    sectorCount: sectorList.length,
+                    sectorsFound: sectorList.join(", "),
+                    sectorCellCounts: sectorCountsFormatted,
+                    cellCount: g.cells.length,
+                    cellNames: g.cells.sort().join(", ")
+                };
+            });
+            
+                        // Populate eNodeB Dropdown
+            const enodebSelect = document.getElementById("filter-enodeb");
+            const prevEnodebIdx = enodebSelect.selectedIndex;
+            enodebSelect.innerHTML = '<option value="">เลือก eNodeB ทั้งหมด</option>';
+            
+            Object.keys(enodebToCellsMap).sort().forEach(enodeb => {
+                const opt = `<option value="${enodeb}">${enodeb}</option>`;
+                enodebSelect.innerHTML += opt;
+            });
+            
+            // Restore selection or select first
+            if (prevEnodebIdx !== -1 && prevEnodebIdx < enodebSelect.options.length) {
+                enodebSelect.selectedIndex = prevEnodebIdx;
+            } else if (enodebSelect.options.length > 1) {
+                enodebSelect.selectedIndex = 1;
+            }
+            
+
+            // Populate Sites Dropdown
+            const filterSiteSelect = document.getElementById("filter-site");
+            filterSiteSelect.innerHTML = '<option value="">เลือก Site ทั้งหมด</option>';
+            uniqueSites.forEach(s => {
+                filterSiteSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+            
+            // Band Quick Filters
+            const chipsContainer = document.getElementById("band-chips-container");
+            chipsContainer.innerHTML = `<div class="band-chip active" id="chip-all" onclick="toggleTopologyBandFilter('All')">All Bands</div>`;
+            uniqueBands.forEach(b => {
+                chipsContainer.innerHTML += `<div class="band-chip" id="chip-${b}" onclick="toggleTopologyBandFilter('${b}')">${b} MHz</div>`;
+            });
+            
+            // Update Header Stats
+            document.getElementById("stat-total-rows").innerText = rawPerformanceData.length.toLocaleString();
+            document.getElementById("stat-total-sites").innerText = uniqueSites.length.toLocaleString();
+            document.getElementById("stat-total-cells").innerText = combinedCellNamesSet.size.toLocaleString();
+            document.getElementById("stat-bands-detected").innerHTML = uniqueBands.map(b => 
+                `<span style="background: ${bandColors[b] || bandColors.Unknown}20; color: ${bandColors[b] || bandColors.Unknown}; padding: 0.05rem 0.35rem; border-radius: 4px; border: 1px solid ${bandColors[b] || bandColors.Unknown}30; font-size: 0.7rem; font-weight: 600;">${b}</span>`
+            ).join("");
+            
+            // Render Loaded Files List UI
+            const flist = document.getElementById("loaded-files-list");
+            flist.innerHTML = "";
+            fileNames.forEach(fname => {
+                const fData = loadedFilesMap[fname];
+                const typeLabel = (fData.hasFDD && fData.hasTDD) ? "FDD+TDD" : fData.hasTDD ? "TDD" : "FDD";
+                
+                flist.innerHTML += `
+                    <div class="loaded-file-item" style="display: flex; justify-content: space-between; align-items: center; background: var(--btn-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.85rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <i data-lucide="file-check" style="width: 16px; height: 16px; color: var(--success); flex-shrink: 0;"></i>
+                            <span style="font-weight: 500; color: var(--text-color); word-break: break-all;">${fname}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">(${fData.performanceRows.length.toLocaleString()} แถว | ${typeLabel})</span>
+                        </div>
+                        <button onclick="removeLoadedFile('${fname}')" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 0.25rem;">
+                            <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            document.getElementById("dashboard-section").style.display = "flex";
+            document.getElementById("header-tabs-container").style.display = "flex";
+            document.getElementById("header-stats-bar").style.display = "block";
+            document.getElementById("loaded-files-container").style.display = "block";
+            
+            // Show floating filter button if data is loaded
+            const triggerBtn = document.getElementById("assistive-filter-trigger");
+            if (triggerBtn) {
+                triggerBtn.style.display = "flex";
+            }
+            
+            // Rebuild Parameter Mapping Rows
+            allParamRows = [];
+            const cellToEnodeb = {};
+            rawPerformanceData.forEach(row => {
+                if (row.cellName && !cellToEnodeb[row.cellName]) {
+                    cellToEnodeb[row.cellName] = row.enodeb;
+                }
+            });
+            
+            combinedCellNamesSet.forEach(cellName => {
+                const enodeb = cellToEnodeb[cellName] || "-";
+                const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                const match = cellName.match(cellRegex);
+                const siteCodeExcel = match ? match[1] : "-";
+                
+                const param = window.PARAMETER_DB ? window.PARAMETER_DB[cellName] : null;
+                const isMapped = !!param;
+                
+                allParamRows.push({
+                    cellName: cellName,
+                    enodeb: enodeb,
+                    siteCodeExcel: siteCodeExcel,
+                    siteCodeParam: isMapped ? param.siteCode : "-",
+                    sectorName: isMapped ? param.sectorName : "-",
+                    direction: isMapped ? param.direction : "-",
+                    isMapped: isMapped
+                });
+            });
+            
+            allParamRows.sort((a, b) => a.cellName.localeCompare(b.cellName));
+            
+            // Populate Parameter eNodeB Filter Dropdown
+            const paramEnodebSelect = document.getElementById("param-enodeb-filter");
+            if (paramEnodebSelect) {
+                paramEnodebSelect.innerHTML = '<option value="">เลือก eNodeB ทั้งหมด</option>';
+                const uniqueEnodebs = Object.keys(combinedEnodebCellsMap).sort();
+                uniqueEnodebs.forEach(e => {
+                    paramEnodebSelect.innerHTML += `<option value="${e}">${e}</option>`;
+                });
+            }
+
+            // Populate Parameter Band Chips Filter
+            const paramBandChips = document.getElementById("param-band-chips-container");
+            if (paramBandChips) {
+                paramBandChips.innerHTML = `<div class="band-chip active" id="param-chip-all" onclick="toggleParamBandFilter('All')">All Bands</div>`;
+                uniqueBands.forEach(b => {
+                    paramBandChips.innerHTML += `<div class="band-chip" id="param-chip-${b}" onclick="toggleParamBandFilter('${b}')">${b} MHz</div>`;
+                });
+            }
+            
+            // Reset active selected bands set
+            paramSelectedBands.clear();
+            
+            filterParameterMappingTable();
+
+            // Re-render and apply filters
+            handleEnodebChange();
+            applyTopologyFilters();
+            
+            lucide.createIcons();
+        }
+
+        // Remove a loaded file and rebuild
+        function removeLoadedFile(filename) {
+            delete loadedFilesMap[filename];
+            rebuildCombinedDataset();
+            showToast("success", `นำไฟล์ ${filename} ออกจากระบบเรียบร้อยแล้ว`);
+        }
+
+        // Toggle uploader panel collapse
+        function toggleUploaderCollapse(forceState) {
+            const content = document.getElementById("uploader-collapsible-content");
+            const icon = document.getElementById("uploader-collapse-icon");
+            const text = document.getElementById("uploader-collapse-text");
+            
+            if (!content || !icon || !text) return;
+            
+            let isCollapsed = content.style.display === "none";
+            if (forceState !== undefined) {
+                isCollapsed = !forceState; // if forceState is true, isCollapsed should be false (expand)
+            }
+            
+            if (isCollapsed) {
+                // Expand
+                content.style.display = "block";
+                icon.style.transform = "rotate(0deg)";
+                text.innerText = "ยุบแผงควบคุม";
+            } else {
+                // Collapse
+                content.style.display = "none";
+                icon.style.transform = "rotate(180deg)";
+                text.innerText = "ขยายแผงควบคุม";
+            }
+        }
+// ================= PERFORMANCE TAB LOGIC =================
+
+        // Handle eNodeB dropdown change
+        function handleEnodebChange() {
+            const enodeb = document.getElementById("filter-enodeb").value;
+            const container = document.getElementById("cell-checkboxes-container");
+            container.innerHTML = "";
+            selectedCellsForPerf.clear();
+
+            if (!enodeb) {
+                container.innerHTML = '<span class="placeholder-text">กรุณาเลือก eNodeB เพื่อแสดงรายชื่อเซลล์</span>';
+                updatePivotTable();
+                updatePerformanceChart();
+                return;
+            }
+
+            const cells = Array.from(enodebToCellsMap[enodeb] || []);
+            if (cells.length === 0) {
+                container.innerHTML = '<span class="placeholder-text">ไม่พบเซลล์สำหรับ eNodeB นี้</span>';
+                updatePivotTable();
+                updatePerformanceChart();
+                return;
+            }
+
+            // Group cells by Band and Sector
+            const matrix = {};
+            const bandsSet = new Set();
+            const sectorsSet = new Set();
+
+            cells.forEach(cell => {
+                const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                const match = cell.match(cellRegex);
+                let band = "Unknown";
+                let sector = "Unknown";
+                
+                if (match) {
+                    const suffix = match[2];
+                    if (suffix.startsWith("07")) band = "700";
+                    else if (suffix.startsWith("09")) band = "900";
+                    else if (suffix.startsWith("18")) band = "1800";
+                    else if (suffix.startsWith("21")) band = "2100";
+                    else if (suffix.startsWith("265")) band = "2650";
+                    else if (suffix.startsWith("26")) band = "2600";
+
+                    const lastChar = suffix.charAt(3).toUpperCase();
+                    sector = "Sector " + lastChar;
+                    if (lastChar === 'A') sector = "Sector 1";
+                    else if (lastChar === 'B') sector = "Sector 2";
+                    else if (lastChar === 'C') sector = "Sector 3";
+                    else if (lastChar === 'P') sector = "Sector 6";
+                    else if (lastChar !== '1' && lastChar !== '2' && lastChar !== '3' && lastChar !== '6' && lastChar !== '7' && lastChar !== '8') {
+                        sector = "Unknown";
+                    }
+                }
+                
+                bandsSet.add(band);
+                sectorsSet.add(sector);
+                
+                if (!matrix[band]) matrix[band] = {};
+                if (!matrix[band][sector]) matrix[band][sector] = [];
+                matrix[band][sector].push(cell);
+            });
+
+            // Sort bands numerically
+            const sortedBands = Array.from(bandsSet).sort((a, b) => {
+                if (a === "Unknown") return 1;
+                if (b === "Unknown") return -1;
+                return parseInt(a) - parseInt(b);
+            });
+
+            // Sort sectors logically
+            const sectorOrder = {
+                "Sector 1": 1,
+                "Sector 2": 2,
+                "Sector 3": 3,
+                "Sector 6": 4,
+                "Sector 7": 5,
+                "Sector 8": 6,
+                "Unknown": 7
+            };
+            const sortedSectors = Array.from(sectorsSet).sort((a, b) => {
+                return (sectorOrder[a] || 99) - (sectorOrder[b] || 99);
+            });
+
+            // Short labels for sector headers in table
+            const sectorShortNames = {
+                "Sector 1": "S1",
+                "Sector 2": "S2",
+                "Sector 3": "S3",
+                "Sector 6": "S6",
+                "Sector 7": "S7",
+                "Sector 8": "S8",
+                "Unknown": "Unknown"
+            };
+
+            // Build HTML table with clickable headers for batch selection
+            let tableHTML = `<table class="cell-selection-table"><thead><tr><th>Band</th>`;
+            sortedSectors.forEach(sector => {
+                const shortName = sectorShortNames[sector] || sector;
+                tableHTML += `
+                    <th onclick="toggleMatrixSector('${sector}')" style="cursor: pointer;" title="คลิกเพื่อเลือก/ล้างข้อมูล Sector นี้ทั้งหมด">
+                        ${shortName} <i data-lucide="check-square" style="width: 10.5px; height: 10.5px; margin-left: 2px; opacity: 0.6; vertical-align: middle;"></i>
+                    </th>
+                `;
+            });
+            tableHTML += `</tr></thead><tbody>`;
+
+            sortedBands.forEach(band => {
+                tableHTML += `
+                    <tr>
+                        <td class="matrix-band-label" onclick="toggleMatrixBand('${band}')" style="cursor: pointer;" title="คลิกเพื่อเลือก/ล้างข้อมูล Band นี้ทั้งหมด">
+                            ${band} MHz <i data-lucide="check-square" style="width: 10.5px; height: 10.5px; margin-left: 4px; opacity: 0.6; vertical-align: middle;"></i>
+                        </td>
+                `;
+                sortedSectors.forEach(sector => {
+                    const cellList = matrix[band][sector];
+                    tableHTML += `<td><div class="cell-selection-cell-container">`;
+                    if (cellList && cellList.length > 0) {
+                        cellList.forEach(cell => {
+                            tableHTML += `
+                                <label class="matrix-checkbox-label">
+                                    <input type="checkbox" value="${cell}" data-band="${band}" data-sector="${sector}" onchange="handleCellCheckboxChange(this)" />
+                                    <span>${cell}</span>
+                                </label>
+                            `;
+                        });
+                    } else {
+                        tableHTML += `<span class="matrix-cell-empty">-</span>`;
+                    }
+                    tableHTML += `</div></td>`;
+                });
+                tableHTML += `</tr>`;
+            });
+            tableHTML += `</tbody></table>`;
+            
+            container.innerHTML = tableHTML;
+            lucide.createIcons(); // Rerender icons in table headers
+
+            // Automatically check first 4 cells by default to populate chart/pivot initially
+            const checkboxes = container.querySelectorAll("input[type='checkbox']");
+            checkboxes.forEach((cb, idx) => {
+                if (idx < 4) {
+                    cb.checked = true;
+                    selectedCellsForPerf.add(cb.value);
+                }
+            });
+
+            updatePivotTable();
+            updatePerformanceChart();
+        }
+
+        // Select All / Deselect All cell checkboxes
+        function selectAllCells(check) {
+            const container = document.getElementById("cell-checkboxes-container");
+            const checkboxes = container.querySelectorAll("input[type='checkbox']");
+            
+            checkboxes.forEach(cb => {
+                cb.checked = check;
+                if (check) selectedCellsForPerf.add(cb.value);
+                else selectedCellsForPerf.delete(cb.value);
+            });
+
+            updatePivotTable();
+            updatePerformanceChart();
+        }
+
+        // Checkbox change handler
+        function handleCellCheckboxChange(checkbox) {
+            if (checkbox.checked) {
+                selectedCellsForPerf.add(checkbox.value);
+            } else {
+                selectedCellsForPerf.delete(checkbox.value);
+            }
+            updatePivotTable();
+            updatePerformanceChart();
+        }
+
+        // Toggle all checkboxes in a specific band
+        function toggleMatrixBand(bandName) {
+            const container = document.getElementById("cell-checkboxes-container");
+            const checkboxes = Array.from(container.querySelectorAll(`input[type='checkbox'][data-band='${bandName}']`));
+            if (checkboxes.length === 0) return;
+
+            const allChecked = checkboxes.every(cb => cb.checked);
+            const targetState = !allChecked;
+
+            checkboxes.forEach(cb => {
+                cb.checked = targetState;
+                if (targetState) {
+                    selectedCellsForPerf.add(cb.value);
+                } else {
+                    selectedCellsForPerf.delete(cb.value);
+                }
+            });
+
+            updatePivotTable();
+            updatePerformanceChart();
+        }
+
+        // Toggle all checkboxes in a specific sector
+        function toggleMatrixSector(sectorName) {
+            const container = document.getElementById("cell-checkboxes-container");
+            const checkboxes = Array.from(container.querySelectorAll(`input[type='checkbox'][data-sector='${sectorName}']`));
+            if (checkboxes.length === 0) return;
+
+            const allChecked = checkboxes.every(cb => cb.checked);
+            const targetState = !allChecked;
+
+            checkboxes.forEach(cb => {
+                cb.checked = targetState;
+                if (targetState) {
+                    selectedCellsForPerf.add(cb.value);
+                } else {
+                    selectedCellsForPerf.delete(cb.value);
+                }
+            });
+
+            updatePivotTable();
+            updatePerformanceChart();
+        }
+
+        // Update Pivot Table (Begin Time x Cell Name)
+        function updatePivotTable() {
+            const headerRow = document.getElementById("pivot-header");
+            const tbody = document.getElementById("pivot-body");
+            
+            headerRow.innerHTML = "<th>Begin Time</th>";
+            tbody.innerHTML = "";
+
+            if (selectedCellsForPerf.size === 0) {
+                headerRow.innerHTML += `<th style="color: var(--text-secondary); font-weight: 400; text-align: center;">กรุณาเลือกเซลล์เพื่อแสดงข้อมูล</th>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            ไม่มีข้อมูลให้แสดงผล
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const cellsArray = Array.from(selectedCellsForPerf).sort();
+            
+            // Build Pivot Headers
+            cellsArray.forEach(cell => {
+                headerRow.innerHTML += `<th>${cell}</th>`;
+            });
+            headerRow.innerHTML += `<th class="pivot-total-col">Grand Total</th>`;
+
+            // Filter raw data for selected cells
+            const filteredRows = rawPerformanceData.filter(r => selectedCellsForPerf.has(r.cellName));
+            
+            // Aggregate values: pivotMap[time][cellName] = prb
+            const pivotMap = {};
+            filteredRows.forEach(row => {
+                if (!pivotMap[row.beginTime]) {
+                    pivotMap[row.beginTime] = {};
+                }
+                // If duplicates exist, we sum them
+                pivotMap[row.beginTime][row.cellName] = (pivotMap[row.beginTime][row.cellName] || 0) + row.prb;
+            });
+
+            // Keep column totals
+            const colTotals = {};
+            cellsArray.forEach(cell => colTotals[cell] = 0);
+            let grandTotalSum = 0;
+
+            // Render Rows
+            chronologicalTimes.forEach(time => {
+                if (!pivotMap[time]) return; // Skip times with no data for selected cells
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td style="font-family: 'Inter', monospace; font-size: 0.85rem;">${time}</td>`;
+                
+                let rowSum = 0;
+                cellsArray.forEach(cell => {
+                    const val = pivotMap[time][cell];
+                    if (val !== undefined) {
+                        tr.innerHTML += `<td>${val.toFixed(4)}</td>`;
+                        rowSum += val;
+                        colTotals[cell] += val;
+                    } else {
+                        tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">0.0000</td>`;
+                    }
+                });
+                
+                tr.innerHTML += `<td class="pivot-total-col">${rowSum.toFixed(4)}</td>`;
+                grandTotalSum += rowSum;
+                tbody.appendChild(tr);
+            });
+
+            // Render Total Row at the bottom
+            const trTotal = document.createElement("tr");
+            trTotal.className = "pivot-total-row";
+            trTotal.innerHTML = `<td>Grand Total</td>`;
+            
+            cellsArray.forEach(cell => {
+                trTotal.innerHTML += `<td>${colTotals[cell].toFixed(4)}</td>`;
+            });
+            trTotal.innerHTML += `<td class="pivot-total-col">${grandTotalSum.toFixed(4)}</td>`;
+            tbody.appendChild(trTotal);
+            updatePerfBandDifferences();
+        }
+
+        // Update eNodeB Band Differences Table inside Performance Tab
+        function updatePerfBandDifferences() {
+            const enodeb = document.getElementById("filter-enodeb").value;
+            const header = document.getElementById("perf-band-diff-header");
+            const tbody = document.getElementById("perf-band-diff-body");
+            const section = document.getElementById("perf-band-diff-section");
+            
+            header.innerHTML = "";
+            tbody.innerHTML = "";
+            perfBandDifferencesSummary = [];
+            
+            if (!enodeb || chronologicalTimes.length === 0) {
+                section.style.display = "none";
+                return;
+            }
+            
+            // 1. Get all cells for this eNodeB
+            const cells = Array.from(enodebToCellsMap[enodeb] || []);
+            if (cells.length === 0) {
+                section.style.display = "none";
+                return;
+            }
+            
+            // Group cells by band
+            const cellsByBand = {};
+            cells.forEach(cell => {
+                const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                const match = cell.match(cellRegex);
+                if (match) {
+                    const suffix = match[2];
+                    let band = "Unknown";
+                    if (suffix.startsWith("07")) band = "700";
+                    else if (suffix.startsWith("09")) band = "900";
+                    else if (suffix.startsWith("18")) band = "1800";
+                    else if (suffix.startsWith("21")) band = "2100";
+                    else if (suffix.startsWith("265")) band = "2650";
+                    else if (suffix.startsWith("26")) band = "2600";
+                    
+                    if (!cellsByBand[band]) cellsByBand[band] = [];
+                    cellsByBand[band].push(cell);
+                }
+            });
+            
+            const bands = Object.keys(cellsByBand).sort((a, b) => {
+                if (a === "Unknown") return 1;
+                if (b === "Unknown") return -1;
+                return parseInt(a) - parseInt(b);
+            });
+            
+            if (bands.length < 2) {
+                section.style.display = "none";
+                return;
+            }
+            
+            section.style.display = "block";
+            
+            // 2. Fetch values and build lookup maps: cellValues[cellName][time] = prb
+            const cellValues = {};
+            cells.forEach(c => {
+                cellValues[c] = {};
+                chronologicalTimes.forEach(t => {
+                    cellValues[c][t] = null;
+                });
+            });
+            
+            rawPerformanceData.forEach(row => {
+                if (row.enodeb === enodeb && cellValues[row.cellName] && cellValues[row.cellName][row.beginTime] !== undefined) {
+                    cellValues[row.cellName][row.beginTime] = row.prb;
+                }
+            });
+            
+            // 3. Compute band averages per time
+            const bandAverages = {};
+            bands.forEach(b => {
+                bandAverages[b] = {};
+                const cellsInBand = cellsByBand[b];
+                chronologicalTimes.forEach(t => {
+                    let sum = 0;
+                    let count = 0;
+                    cellsInBand.forEach(c => {
+                        const val = cellValues[c][t];
+                        if (val !== null) {
+                            sum += val;
+                            count++;
+                        }
+                    });
+                    bandAverages[b][t] = count > 0 ? (sum / count) : null;
+                });
+            });
+            
+            // 4. Render Table Header
+            let headerHTML = `<tr><th>Comparison Pair</th>`;
+            chronologicalTimes.forEach(t => {
+                const displayTime = t.slice(5, 16); // e.g. "06-29 18:00"
+                headerHTML += `<th>${displayTime}</th>`;
+            });
+            headerHTML += `</tr>`;
+            header.innerHTML = headerHTML;
+            
+            // 5. Compute differences and render rows
+            const thresholdInput = document.getElementById("band-diff-threshold");
+            const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 30;
+            
+            for (let i = 0; i < bands.length; i++) {
+                for (let j = i + 1; j < bands.length; j++) {
+                    const bandA = bands[i];
+                    const bandB = bands[j];
+                    const pairLabel = `${bandA}-${bandB}`;
+                    
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `<td style="font-weight: 600; color: var(--text-color);">${pairLabel}</td>`;
+                    
+                    const values = {};
+                    chronologicalTimes.forEach(t => {
+                        const avgA = bandAverages[bandA][t];
+                        const avgB = bandAverages[bandB][t];
+                        
+                        if (avgA !== null && avgB !== null) {
+                            const val = avgA - avgB;
+                            values[t] = val;
+                            
+                            const absVal = Math.abs(val);
+                            const sign = val > 0 ? '+' : '';
+                            
+                            let cellClass = "";
+                            let warningText = "";
+                            if (absVal >= threshold) {
+                                cellClass = 'style="color: #ff3b30; font-weight: 600; background: rgba(255, 59, 48, 0.05);"';
+                                warningText = ' ⚠️';
+                            }
+                            tr.innerHTML += `<td ${cellClass}>${sign}${val.toFixed(4)}%${warningText}</td>`;
+                        } else {
+                            values[t] = null;
+                            tr.innerHTML += `<td style="color: var(--text-secondary); opacity: 0.4;">-</td>`;
+                        }
+                    });
+                    
+                    perfBandDifferencesSummary.push({ pairLabel, values });
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+
+        // Export Performance Band Differences to CSV
+        function exportPerfBandDifferencesCSV() {
+            if (perfBandDifferencesSummary.length === 0) {
+                showToast("error", "ไม่มีข้อมูลผลต่างเฉลี่ยคลื่นสำหรับการส่งออก!");
+                return;
+            }
+            
+            let csvContent = "\ufeff"; // BOM UTF-8
+            csvContent += "Comparison Pair," + chronologicalTimes.join(",") + "\n";
+            
+            const thresholdInput = document.getElementById("band-diff-threshold");
+            const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 30;
+            
+            perfBandDifferencesSummary.forEach(row => {
+                let rowCells = [];
+                chronologicalTimes.forEach(t => {
+                    const val = row.values[t];
+                    if (val !== null) {
+                        const sign = val > 0 ? '+' : '';
+                        let cellVal = `${sign}${val.toFixed(4)}%`;
+                        if (Math.abs(val) >= threshold) {
+                            cellVal += " (Unbalance)";
+                        }
+                        rowCells.push(cellVal);
+                    } else {
+                        rowCells.push("-");
+                    }
+                });
+                csvContent += `"${row.pairLabel}",${rowCells.join(",")}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `lte_hourly_band_diffs_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("success", "ส่งออกไฟล์ผลต่างเฉลี่ยคลื่นรายชั่วโมง CSV เรียบร้อยแล้ว!");
+        }
+
+        // Update Line Chart (Tension curve over Begin Time)
+        function updatePerformanceChart() {
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+
+            if (selectedCellsForPerf.size === 0) {
+                return;
+            }
+
+            const cellsArray = Array.from(selectedCellsForPerf).sort();
+            
+            // Build data maps: datasetsMap[cellName] = array of values matching chronologicalTimes
+            const datasetsMap = {};
+            cellsArray.forEach(cell => {
+                datasetsMap[cell] = Array(chronologicalTimes.length).fill(null);
+            });
+
+            // Filter and populate datasetsMap
+            const filteredRows = rawPerformanceData.filter(r => selectedCellsForPerf.has(r.cellName));
+            
+            // Map time indices to easily fill values
+            const timeToIndexMap = {};
+            chronologicalTimes.forEach((time, idx) => {
+                timeToIndexMap[time] = idx;
+            });
+
+            filteredRows.forEach(row => {
+                const tIdx = timeToIndexMap[row.beginTime];
+                if (tIdx !== undefined) {
+                    datasetsMap[row.cellName][tIdx] = row.prb;
+                }
+            });
+
+            // Format Chart.js datasets matching Excel styling in image.png
+            const colorPalette = [
+                '#4f81bd', // Excel Blue (BSMJYL0711)
+                '#f79646', // Excel Orange (BSMJYL0911)
+                '#7f7f7f', // Excel Grey (BSMJYL1811)
+                '#ffc000', // Excel Yellow (BSMJYL2111)
+                '#5b9bd5', // Excel Light Blue
+                '#70ad47', // Excel Green
+                '#254061', 
+                '#95b3d7', 
+                '#b3a2c7'
+            ];
+
+            const datasets = cellsArray.map((cell, idx) => {
+                const color = colorPalette[idx % colorPalette.length];
+                return {
+                    label: cell,
+                    data: datasetsMap[cell],
+                    borderColor: color,
+                    backgroundColor: color + "10",
+                    borderWidth: 2.2,
+                    tension: 0, // Sharp lines like Excel Pivot Chart (no curves)
+                    spanGaps: true,
+                    pointRadius: 0, // No dots on lines like Excel
+                    pointHoverRadius: 5
+                };
+            });
+
+            const ctx = document.getElementById("performance-chart").getContext("2d");
+            const chartSettings = getChartThemeSettings();
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chronologicalTimes, // show full date-time string YYYY-MM-DD HH:mm:ss
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: chartSettings.textColor,
+                                font: { family: 'Outfit', size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: chartSettings.tooltipBg,
+                            titleColor: chartSettings.textColor,
+                            bodyColor: chartSettings.textColor,
+                            titleFont: { family: 'Outfit', size: 13 },
+                            bodyFont: { family: 'Inter', size: 12 },
+                            borderColor: chartSettings.tooltipBorder,
+                            borderWidth: 1,
+                            footerColor: chartSettings.tooltipFooter,
+                            footerFont: { family: 'Inter', size: 11, weight: '600' },
+                            callbacks: {
+                                footer: function(tooltipItems) {
+                                    if (!tooltipItems || tooltipItems.length === 0) return '';
+                                    const time = tooltipItems[0].label;
+                                    const enodeb = document.getElementById("filter-enodeb").value;
+                                    if (!enodeb) return '';
+                                    
+                                    // 1. Get all performance rows for this enodeb and time
+                                    const rowsAtTime = rawPerformanceData.filter(r => 
+                                        r.enodeb === enodeb && r.beginTime === time
+                                    );
+                                    if (rowsAtTime.length === 0) return '';
+                                    
+                                    // 2. Group by band
+                                    const bandSums = {};
+                                    const bandCounts = {};
+                                    
+                                    rowsAtTime.forEach(r => {
+                                        const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                                        const match = r.cellName.match(cellRegex);
+                                        if (match) {
+                                            const suffix = match[2];
+                                            let band = "Unknown";
+                                            if (suffix.startsWith("07")) band = "700";
+                                            else if (suffix.startsWith("09")) band = "900";
+                                            else if (suffix.startsWith("18")) band = "1800";
+                                            else if (suffix.startsWith("21")) band = "2100";
+                                            else if (suffix.startsWith("265")) band = "2650";
+                                            else if (suffix.startsWith("26")) band = "2600";
+                                            
+                                            bandSums[band] = (bandSums[band] || 0) + r.prb;
+                                            bandCounts[band] = (bandCounts[band] || 0) + 1;
+                                        }
+                                    });
+                                    
+                                    const bands = Object.keys(bandCounts).sort((a, b) => {
+                                        if (a === "Unknown") return 1;
+                                        if (b === "Unknown") return -1;
+                                        return parseInt(a) - parseInt(b);
+                                    });
+                                    
+                                    if (bands.length < 2) return '';
+                                    
+                                    // 3. Compute band averages
+                                    const bandAverages = {};
+                                    bands.forEach(b => {
+                                        bandAverages[b] = bandSums[b] / bandCounts[b];
+                                    });
+                                    
+                                    // 4. Compute differences between unique pairs
+                                    const thresholdInput = document.getElementById("band-diff-threshold");
+                                    const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 30;
+                                    
+                                    let footerLines = [];
+                                    let hasDiff = false;
+                                    let hasUnbalance = false;
+                                    
+                                    for (let i = 0; i < bands.length; i++) {
+                                        for (let j = i + 1; j < bands.length; j++) {
+                                            const bandA = bands[i];
+                                            const bandB = bands[j];
+                                            const val = bandAverages[bandA] - bandAverages[bandB];
+                                            const absVal = Math.abs(val);
+                                            const sign = val > 0 ? '+' : '';
+                                            let lineText = `  ${bandA}-${bandB}: ${sign}${val.toFixed(4)}%`;
+                                            if (absVal >= threshold) {
+                                                lineText += " ⚠️ Unbalance";
+                                                hasUnbalance = true;
+                                            }
+                                            footerLines.push(lineText);
+                                            hasDiff = true;
+                                        }
+                                    }
+                                    
+                                    if (hasDiff) {
+                                        const title = hasUnbalance 
+                                            ? `\n[ผลต่างเฉลี่ย (⚠️ Unbalance)]` 
+                                            : `\n[ผลต่างเฉลี่ยรายคลื่น (Band Diff)]`;
+                                        footerLines.unshift(title);
+                                        return footerLines.join('\n');
+                                    }
+                                    return '';
+                                }
+                            }
+                        },
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy'
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'DL PRB Utilization Rate (%)',
+                                color: chartSettings.textColor,
+                                font: { family: 'Outfit', size: 12 }
+                            },
+                            grid: { color: chartSettings.gridColor },
+                            ticks: { 
+                                color: chartSettings.tickColor,
+                                callback: function(value) {
+                                    return value + '%'; // Format with percentage symbol
+                                }
+                            },
+                            max: 100,
+                            min: 0
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: chartSettings.tickColor, 
+                                autoSkip: false, // Prevent Chart.js from randomly skipping ticks
+                                maxRotation: 90, // Vertical labels like Excel
+                                minRotation: 90,
+                                callback: function(val, index) {
+                                    const label = chronologicalTimes[index];
+                                    if (!label) return '';
+                                    
+                                    // Extract the hour (chars 11 and 12, e.g. "02" in "2026-06-29 02:00:00")
+                                    const hourStr = label.slice(11, 13);
+                                    const hour = parseInt(hourStr, 10);
+                                    
+                                    // Show tick text only for even hours (0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22)
+                                    if (hour % 2 === 0) {
+                                        return label;
+                                    }
+                                    return ''; // Hide text for odd hours
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Reset Zoom function for Performance Chart
+        function resetChartZoom() {
+            if (performanceChartInstance) {
+                performanceChartInstance.resetZoom();
+            }
+        }
+
+        // Export Pivot Table to CSV
+        function exportPivotCSV() {
+            if (selectedCellsForPerf.size === 0) {
+                showToast("error", "ไม่สามารถส่งออกได้ เนื่องจากไม่มีข้อมูลสรุปที่เลือกไว้!");
+                return;
+            }
+
+            const cellsArray = Array.from(selectedCellsForPerf).sort();
+            let csvContent = "\ufeff"; // BOM UTF-8
+            
+            // Header
+            csvContent += "Begin Time," + cellsArray.join(",") + ",Grand Total\n";
+
+            // Aggregate data
+            const filteredRows = rawPerformanceData.filter(r => selectedCellsForPerf.has(r.cellName));
+            const pivotMap = {};
+            filteredRows.forEach(row => {
+                if (!pivotMap[row.beginTime]) pivotMap[row.beginTime] = {};
+                pivotMap[row.beginTime][row.cellName] = (pivotMap[row.beginTime][row.cellName] || 0) + row.prb;
+            });
+
+            // Column totals
+            const colTotals = {};
+            cellsArray.forEach(cell => colTotals[cell] = 0);
+            let grandTotalSum = 0;
+
+            // Rows
+            chronologicalTimes.forEach(time => {
+                if (!pivotMap[time]) return;
+                
+                let rowSum = 0;
+                let rowCells = [];
+                cellsArray.forEach(cell => {
+                    const val = pivotMap[time][cell] || 0;
+                    rowCells.push(val.toFixed(4));
+                    rowSum += val;
+                    colTotals[cell] += val;
+                });
+                
+                csvContent += `${time},${rowCells.join(",")},${rowSum.toFixed(4)}\n`;
+                grandTotalSum += rowSum;
+            });
+
+            // Total row
+            let totalRowCells = [];
+            cellsArray.forEach(cell => {
+                totalRowCells.push(colTotals[cell].toFixed(4));
+            });
+            csvContent += `Grand Total,${totalRowCells.join(",")},${grandTotalSum.toFixed(4)}\n`;
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `lte_pivot_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("success", "ส่งออกไฟล์ Pivot CSV เรียบร้อยแล้ว!");
+        }
+
+        // ================= TOPOLOGY TAB LOGIC =================
+
+        // Band Filter toggler
+        function toggleTopologyBandFilter(band) {
+            const allChip = document.getElementById("chip-all");
+            
+            if (band === 'All') {
+                topoSelectedBands.clear();
+                document.querySelectorAll(".band-chip").forEach(c => c.classList.remove("active"));
+                allChip.classList.add("active");
+            } else {
+                allChip.classList.remove("active");
+                const targetChip = document.getElementById(`chip-${band}`);
+                
+                if (topoSelectedBands.has(band)) {
+                    topoSelectedBands.delete(band);
+                    targetChip.classList.remove("active");
+                } else {
+                    topoSelectedBands.add(band);
+                    targetChip.classList.add("active");
+                }
+
+                if (topoSelectedBands.size === 0) {
+                    allChip.classList.add("active");
+                }
+            }
+            applyTopologyFilters();
+        }
+
+        // Apply Search and Filters to topology table
+        function applyTopologyFilters() {
+            const siteSelectVal = document.getElementById("filter-site").value;
+            const sectorCountFilter = document.getElementById("filter-sector-count").value;
+
+            filteredTopology = topologySummary.filter(item => {
+                // 1. Band filter
+                if (topoSelectedBands.size > 0 && !topoSelectedBands.has(item.band)) {
+                    return false;
+                }
+                // 2. Site Dropdown filter
+                if (siteSelectVal && item.site !== siteSelectVal) {
+                    return false;
+                }
+                // 3. Sector Count filter
+                if (sectorCountFilter) {
+                    if (sectorCountFilter === "more") {
+                        if (item.sectorCount < 3) return false;
+                    } else {
+                        if (item.sectorCount !== parseInt(sectorCountFilter)) return false;
+                    }
+                }
+                return true;
+            });
+
+            topoCurrentPage = 1;
+            renderTopologyTable();
+        }
+
+        // Sort columns in topology
+        function sortTopologyTable(column) {
+            if (topoSortColumn === column) {
+                topoSortDirection = topoSortDirection === "asc" ? "desc" : "asc";
+            } else {
+                topoSortColumn = column;
+                topoSortDirection = "asc";
+            }
+
+            const headers = document.querySelectorAll("#topology-table th");
+            headers.forEach(th => {
+                const icon = th.querySelector("i");
+                if (icon) icon.className = "lucide lucide-arrow-up-down";
+            });
+
+            filteredTopology.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+
+                if (column === "sectorCount" || column === "cellCount") {
+                    valA = Number(valA);
+                    valB = Number(valB);
+                } else {
+                    valA = String(valA).toLowerCase();
+                    valB = String(valB).toLowerCase();
+                }
+
+                if (valA < valB) return topoSortDirection === "asc" ? -1 : 1;
+                if (valA > valB) return topoSortDirection === "asc" ? 1 : -1;
+                return 0;
+            });
+
+            renderTopologyTable();
+        }
+
+        // Render Topology table body
+        function renderTopologyTable() {
+            const tbody = document.getElementById("topology-body");
+            tbody.innerHTML = "";
+
+            if (filteredTopology.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            ไม่พบข้อมูลที่ตรงกับฟิลเตอร์
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("topology-pagination-controls").style.display = "none";
+                return;
+            }
+
+            // Pagination calculation
+            const startIdx = (topoCurrentPage - 1) * topoRowsPerPage;
+            const endIdx = Math.min(startIdx + topoRowsPerPage, filteredTopology.length);
+            const pageData = filteredTopology.slice(startIdx, endIdx);
+
+            pageData.forEach(row => {
+                const cellsList = row.cellNames.split(", ");
+                let cellsPreviewHTML = "";
+                const escapedCellNames = row.cellNames.replace(/'/g, "\\'");
+                
+                if (cellsList.length <= 4) {
+                    cellsPreviewHTML = `<div class="cell-tag-container clickable" onclick="openCellsModal('${row.site}', '${row.band}', '${escapedCellNames}')">${cellsList.map(c => `<span class="cell-tag">${c}</span>`).join("")}</div>`;
+                } else {
+                    cellsPreviewHTML = `
+                        <div class="cell-tag-container clickable" onclick="openCellsModal('${row.site}', '${row.band}', '${escapedCellNames}')">
+                            ${cellsList.slice(0, 3).map(c => `<span class="cell-tag">${c}</span>`).join("")}
+                            <span class="cell-tag plus-tag" style="background: rgba(0, 113, 227, 0.12); color: var(--primary); font-weight:600;">+${cellsList.length - 3} Cells</span>
+                        </div>
+                    `;
+                }
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><span class="badge badge-band" style="background: ${bandColors[row.band] || bandColors.Unknown}18; color: ${bandColors[row.band] || bandColors.Unknown}; border-color: ${bandColors[row.band] || bandColors.Unknown}30;">${row.band}</span></td>
+                    <td style="font-weight: 600; color: var(--text-color); font-family: 'Inter', sans-serif;">${row.site}</td>
+                    <td><span class="badge badge-sector-count">${row.sectorCount}</span></td>
+                    <td style="font-size: 0.85rem; color: var(--text-secondary);">${row.sectorsFound}</td>
+
+                    <td style="font-family: 'Inter', sans-serif; font-weight: 500;">${row.cellCount}</td>
+                    <td>${cellsPreviewHTML}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Pagination UI
+            document.getElementById("topology-pagination-controls").style.display = "flex";
+            document.getElementById("topology-pagination-info").innerText = `แสดงแถวที่ ${startIdx + 1} ถึง ${endIdx} จากทั้งหมด ${filteredTopology.length} แถว`;
+
+            const totalPages = Math.ceil(filteredTopology.length / topoRowsPerPage);
+            const pagesWrapper = document.getElementById("topology-pages-wrapper");
+            pagesWrapper.innerHTML = "";
+
+            // Prev button
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "btn-page";
+            prevBtn.innerHTML = `<i data-lucide="chevron-left" style="width:16px; height:16px;"></i>`;
+            prevBtn.disabled = topoCurrentPage === 1;
+            prevBtn.onclick = () => { if (topoCurrentPage > 1) { topoCurrentPage--; renderTopologyTable(); } };
+            pagesWrapper.appendChild(prevBtn);
+
+            // Pages numbers
+            const maxPageButtons = 5;
+            let startPage = Math.max(1, topoCurrentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+            if (endPage - startPage < maxPageButtons - 1) {
+                startPage = Math.max(1, endPage - maxPageButtons + 1);
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                const pBtn = document.createElement("button");
+                pBtn.className = `btn-page ${p === topoCurrentPage ? 'active' : ''}`;
+                pBtn.innerText = p;
+                pBtn.onclick = () => { topoCurrentPage = p; renderTopologyTable(); };
+                pagesWrapper.appendChild(pBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "btn-page";
+            nextBtn.innerHTML = `<i data-lucide="chevron-right" style="width:16px; height:16px;"></i>`;
+            nextBtn.disabled = topoCurrentPage === totalPages;
+            nextBtn.onclick = () => { if (topoCurrentPage < totalPages) { topoCurrentPage++; renderTopologyTable(); } };
+            pagesWrapper.appendChild(nextBtn);
+
+            lucide.createIcons();
+        }
+
+        // Export Topology Table to CSV
+        function exportTopologyCSV() {
+            if (filteredTopology.length === 0) {
+                showToast("error", "ไม่มีข้อมูลสำหรับการส่งออก!");
+                return;
+            }
+
+            let csvContent = "\ufeff"; // BOM UTF-8
+            csvContent += "Band,Site,Sector Count,Sectors Found,Cell Count,Cell Names\n";
+
+            filteredTopology.forEach(row => {
+                const escapedCells = `"${row.cellNames.replace(/"/g, '""')}"`;
+                const escapedSectors = `"${row.sectorsFound.replace(/"/g, '""')}"`;
+                csvContent += `${row.band},${row.site},${row.sectorCount},${escapedSectors},${row.cellCount},${escapedCells}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `lte_topology_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("success", "ส่งออกไฟล์ Topology CSV เรียบร้อยแล้ว!");
+        }
+
+        // ================= DAY-OVER-DAY COMPARISON LOGIC =================
+
+        // Handle eNodeB dropdown change in Day Compare tab
+        
+
+        // Select All / Deselect All
+        
+
+        // Checkbox change handler
+        function handleDayCompareCellCheckboxChange(checkbox) {
+            if (checkbox.checked) {
+                selectedCellsForDayCompare.add(checkbox.value);
+            } else {
+                selectedCellsForDayCompare.delete(checkbox.value);
+            }
+            updateDayCompareReport();
+        }
+
+        // Toggle row band
+        
+
+        // Toggle column sector
+        
+
+        // Handle changes to the global Unbalance threshold
+        function handleThresholdChange() {
+            if (rawPerformanceData.length > 0) {
+                updatePerformanceChart();
+                updatePivotTable();
+                updatePerfBandDifferences();
+            }
+        }
+
+        // Update Day-over-Day Comparison Report
+        
+
+        // Reset zoom for Day Compare Chart
+        
+
+        // Export Day Compare Report to CSV
+        
+
+
+
+
+
+        // Export Day Band Differences to CSV
+        
+
+        // Modal functions
+        let currentModalCellsText = "";
+
+        function openCellsModal(site, band, cellNamesStr) {
+            const overlay = document.getElementById("cells-modal-overlay");
+            const title = document.getElementById("cells-modal-title");
+            const subtitle = document.getElementById("cells-modal-subtitle");
+            const grid = document.getElementById("cells-modal-grid");
+
+            title.innerText = `Site: ${site}`;
+            subtitle.innerText = `รายชื่อเซลล์ทั้งหมดใน Band ${band} MHz (รวมทั้งหมด ${cellNamesStr.split(', ').length} เซลล์)`;
+            
+            grid.innerHTML = "";
+            cellNamesStr.split(', ').forEach(cell => {
+                const span = document.createElement("span");
+                span.className = "modal-cell-tag";
+                span.innerText = cell;
+                grid.appendChild(span);
+            });
+
+            currentModalCellsText = cellNamesStr;
+            overlay.classList.add("active");
+            lucide.createIcons();
+        }
+
+        function closeCellsModal(event) {
+            const overlay = document.getElementById("cells-modal-overlay");
+            overlay.classList.remove("active");
+        }
+
+        function copyModalCells() {
+            if (!currentModalCellsText) return;
+            
+            navigator.clipboard.writeText(currentModalCellsText).then(() => {
+                showToast("success", "คัดลอกรายชื่อเซลล์ทั้งหมดลงคลิปบอร์ดแล้ว!");
+            }).catch(err => {
+                showToast("error", "ไม่สามารถคัดลอกได้: " + err);
+            });
+        }
+
+        // ================= PARAMETER MAPPING LOGIC =================
+        let paramSelectedBands = new Set();
+        
+        function toggleParamBandFilter(band) {
+            const allChip = document.getElementById("param-chip-all");
+            if (!allChip) return;
+            
+            if (band === 'All') {
+                paramSelectedBands.clear();
+                document.querySelectorAll("#param-band-chips-container .band-chip").forEach(c => c.classList.remove("active"));
+                allChip.classList.add("active");
+            } else {
+                allChip.classList.remove("active");
+                const targetChip = document.getElementById(`param-chip-${band}`);
+                if (!targetChip) return;
+                
+                if (paramSelectedBands.has(band)) {
+                    paramSelectedBands.delete(band);
+                    targetChip.classList.remove("active");
+                } else {
+                    paramSelectedBands.add(band);
+                    targetChip.classList.add("active");
+                }
+
+                if (paramSelectedBands.size === 0) {
+                    allChip.classList.add("active");
+                }
+            }
+            filterParameterMappingTable();
+        }
+
+        function filterParameterMappingTable() {
+            const searchVal = document.getElementById("param-search-input").value.toLowerCase().trim();
+            const matchFilter = document.getElementById("param-match-filter").value;
+            const enodebFilter = document.getElementById("param-enodeb-filter") ? document.getElementById("param-enodeb-filter").value : "";
+            
+            filteredParamRows = allParamRows.filter(row => {
+                // 1. Match status filter
+                if (matchFilter === "mapped" && !row.isMapped) return false;
+                if (matchFilter === "unmapped" && row.isMapped) return false;
+                
+                // 2. eNodeB filter
+                if (enodebFilter && row.enodeb !== enodebFilter) return false;
+                
+                // 3. Band filter
+                if (paramSelectedBands.size > 0) {
+                    const cellRegex = /^(.*)[LS]([0-9A-Z]{4})$/i;
+                    const match = row.cellName.match(cellRegex);
+                    if (match) {
+                        const suffix = match[2];
+                        let band = "Unknown";
+                        if (suffix.startsWith("07")) band = "700";
+                        else if (suffix.startsWith("09")) band = "900";
+                        else if (suffix.startsWith("18")) band = "1800";
+                        else if (suffix.startsWith("21")) band = "2100";
+                        else if (suffix.startsWith("265")) band = "2650";
+                        else if (suffix.startsWith("26")) band = "2600";
+                        
+                        if (!paramSelectedBands.has(band)) return false;
+                    } else {
+                        if (!paramSelectedBands.has("Unknown")) return false;
+                    }
+                }
+                
+                // 4. Text search
+                if (searchVal) {
+                    const cellMatch = row.cellName.toLowerCase().includes(searchVal);
+                    const siteExcelMatch = row.siteCodeExcel.toLowerCase().includes(searchVal);
+                    const siteParamMatch = row.siteCodeParam.toLowerCase().includes(searchVal);
+                    const sectorMatch = row.sectorName.toLowerCase().includes(searchVal);
+                    if (!cellMatch && !siteExcelMatch && !siteParamMatch && !sectorMatch) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            paramCurrentPage = 1;
+            renderParameterMappingTable();
+        }
+
+        function renderParameterMappingTable() {
+            const tbody = document.getElementById("parameter-mapping-body");
+            const info = document.getElementById("param-table-info");
+            const pagesWrapper = document.getElementById("param-pages-wrapper");
+            if (!tbody) return;
+            
+            if (filteredParamRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">ไม่พบข้อมูลตามเงื่อนไขตัวกรอง</td></tr>`;
+                if (info) info.innerText = "แสดง 0 ถึง 0 จาก 0 แถว";
+                if (pagesWrapper) pagesWrapper.innerHTML = "";
+                return;
+            }
+            
+            const startIdx = (paramCurrentPage - 1) * paramRowsPerPage;
+            const endIdx = Math.min(startIdx + paramRowsPerPage, filteredParamRows.length);
+            const pageRows = filteredParamRows.slice(startIdx, endIdx);
+            
+            let html = "";
+            pageRows.forEach(row => {
+                const statusBadge = row.isMapped 
+                    ? `<span style="background: rgba(46, 204, 113, 0.15); color: #2ecc71; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Mapped</span>`
+                    : `<span style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Not Found</span>`;
+                
+                html += `
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-color);">${row.cellName}</td>
+                        <td>${row.enodeb}</td>
+                        <td>${row.siteCodeExcel}</td>
+                        <td style="color: ${row.isMapped ? 'var(--text-color)' : 'var(--text-secondary)'}; font-weight: ${row.isMapped ? '500' : 'normal'};">${row.siteCodeParam}</td>
+                        <td>${row.sectorName}</td>
+                        <td>${row.direction}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            if (info) info.innerText = `แสดง ${startIdx + 1} ถึง ${endIdx} จาก ${filteredParamRows.length.toLocaleString()} แถว`;
+            
+            const totalPages = Math.ceil(filteredParamRows.length / paramRowsPerPage);
+            buildParamPagination(totalPages);
+        }
+
+        function buildParamPagination(totalPages) {
+            const wrapper = document.getElementById("param-pages-wrapper");
+            if (!wrapper) return;
+            wrapper.innerHTML = "";
+            
+            if (totalPages <= 1) return;
+            
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "page-btn";
+            prevBtn.innerHTML = '<i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>';
+            prevBtn.disabled = paramCurrentPage === 1;
+            prevBtn.onclick = () => {
+                if (paramCurrentPage > 1) {
+                    paramCurrentPage--;
+                    renderParameterMappingTable();
+                }
+            };
+            wrapper.appendChild(prevBtn);
+            
+            const maxVisible = 5;
+            let startPage = Math.max(1, paramCurrentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement("button");
+                btn.className = `page-btn ${i === paramCurrentPage ? "active" : ""}`;
+                btn.innerText = i;
+                btn.onclick = () => {
+                    paramCurrentPage = i;
+                    renderParameterMappingTable();
+                };
+                wrapper.appendChild(btn);
+            }
+            
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "page-btn";
+            nextBtn.innerHTML = '<i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>';
+            nextBtn.disabled = paramCurrentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (paramCurrentPage < totalPages) {
+                    paramCurrentPage++;
+                    renderParameterMappingTable();
+                }
+            };
+            wrapper.appendChild(nextBtn);
+            
+            lucide.createIcons();
+        }
+
+        function exportParameterMappingCSV() {
+            if (filteredParamRows.length === 0) {
+                showToast("error", "ไม่มีข้อมูลการแมปสำหรับการส่งออก!");
+                return;
+            }
+            
+            let csv = "\uFEFF"; // UTF-8 BOM
+            csv += "Cell Name,eNodeB / gNB Name,Site Code (excel),Site Code (Parameter),Sector Name (Parameter),Direction (Parameter),Status\n";
+            
+            filteredParamRows.forEach(row => {
+                const statusStr = row.isMapped ? "Mapped" : "Not Found";
+                csv += `"${row.cellName}","${row.enodeb}","${row.siteCodeExcel}","${row.siteCodeParam}","${row.sectorName}","${row.direction}","${statusStr}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Parameter_Mapping_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("success", "ส่งออกไฟล์ Parameter Mapping CSV เรียบร้อยแล้ว!");
+        }
+
+        // Floating AssistiveTouch Filter Panel Toggle Functions
+        function toggleFloatingFilterPanel() {
+            const isPerfActive = document.getElementById("btn-tab-perf").classList.contains("active");
+            const isTopoActive = document.getElementById("btn-tab-topo").classList.contains("active");
+            
+            let panelId = "parameter-filters-panel";
+            if (isPerfActive) panelId = "performance-filters-panel";
+            else if (isTopoActive) panelId = "topology-filters-panel";
+            
+            const panel = document.getElementById(panelId);
+            const btn = document.getElementById("assistive-filter-trigger");
+            if (!panel || !btn) return;
+            
+            // Close other panels just in case
+            const allPanelIds = ["performance-filters-panel", "topology-filters-panel", "parameter-filters-panel"];
+            allPanelIds.forEach(id => {
+                if (id !== panelId) {
+                    const p = document.getElementById(id);
+                    if (p) p.style.display = "none";
+                }
+            });
+            
+            const isOpen = panel.style.display === "flex" || panel.style.display === "";
+            const computedStyle = window.getComputedStyle(panel).display;
+            
+            if (computedStyle === "flex") {
+                panel.style.display = "none";
+                btn.classList.remove("active");
+                document.removeEventListener("click", closePanelOnClickOutside);
+            } else {
+                panel.style.display = "flex";
+                btn.classList.add("active");
+                
+                // Add click outside listener with delay to prevent capturing current click
+                setTimeout(() => {
+                    document.addEventListener("click", closePanelOnClickOutside);
+                }, 10);
+            }
+        }
+        
+        function closePanelOnClickOutside(e) {
+            const isPerfActive = document.getElementById("btn-tab-perf").classList.contains("active");
+            const isTopoActive = document.getElementById("btn-tab-topo").classList.contains("active");
+            
+            let panelId = "parameter-filters-panel";
+            if (isPerfActive) panelId = "performance-filters-panel";
+            else if (isTopoActive) panelId = "topology-filters-panel";
+            
+            const panel = document.getElementById(panelId);
+            const btn = document.getElementById("assistive-filter-trigger");
+            if (!panel || !btn) return;
+            
+            // Check if click was outside panel and button
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.style.display = "none";
+                btn.classList.remove("active");
+                document.removeEventListener("click", closePanelOnClickOutside);
+            }
+        }
+
+    </script>
+
+    <!-- Modal for showing all cells in a Site/Band -->
+    <div class="modal-overlay" id="cells-modal-overlay" onclick="closeCellsModal(event)">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title" id="cells-modal-title">Cell Names</span>
+                <button class="modal-close" onclick="closeCellsModal()"><i data-lucide="x" style="width:16px; height:16px;"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-subtitle" id="cells-modal-subtitle"></div>
+                <div class="modal-cell-grid" id="cells-modal-grid"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-secondary" onclick="closeCellsModal()">ปิด</button>
+                <button class="btn-modal btn-modal-primary" id="btn-copy-modal-cells" onclick="copyModalCells()">
+                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i> คัดลอกทั้งหมด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating AssistiveTouch Trigger Button -->
+    <div id="assistive-filter-trigger" onclick="toggleFloatingFilterPanel()" class="assistive-touch-btn" style="display: none;" title="กำหนดค่าตัวกรอง (Configure Filters)">
+        <i data-lucide="sliders-horizontal"></i>
+    </div>
+</body>
+</html>
